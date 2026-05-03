@@ -98,15 +98,27 @@ export default function CreateRequestPage() {
 
             #print-area {
               display: block !important;
+              font-family: var(--font-thmanyah), system-ui, sans-serif !important;
+              color: #000000 !important;
             }
 
             body {
               background: #ffffff !important;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
 
             @page {
-              size: A4;
-              margin: 18mm;
+              size: A4 portrait;
+              margin: 12mm;
+            }
+
+            /* إخفاء رابط الصفحة والتاريخ الافتراضي اللي بيحطه المتصفح */
+            @page {
+              @top-left { content: none; }
+              @top-right { content: none; }
+              @bottom-left { content: none; }
+              @bottom-right { content: none; }
             }
           }
         `}</style>
@@ -159,169 +171,150 @@ export default function CreateRequestPage() {
           </div>
         </div>
 
+        {/* تصميم الـ PDF الجاهز للطباعة */}
         <div
           id="print-area"
-          className="hidden bg-white text-black"
+          className="hidden bg-white text-black relative min-h-[260mm]"
           dir="rtl"
         >
-          <div className="mb-8 border-b-2 border-black pb-6 text-center">
-            <h1 className="mb-2 text-2xl font-bold">
-              طلب تنظيم فعالية / تجمع سلمي
-            </h1>
-            <p className="text-sm">
-              رقم الطلب المرجعي: {requestNumber} | تاريخ الإنشاء:{" "}
-              {new Date().toLocaleDateString("ar-SY")}
-            </p>
+          {/* ترويسة المستند (Header) */}
+          <div className="mb-6 flex items-end justify-between border-b-2 border-[#073D35] pb-4">
+            <div className="text-[10px] text-gray-600 space-y-1 font-medium">
+              <p>رقم الطلب المرجعي: <span className="font-bold text-black">{requestNumber}</span></p>
+              <p>تاريخ الإنشاء: <span className="font-bold text-black">{new Date().toLocaleDateString("ar-SY")}</span></p>
+            </div>
+            <div className="text-center">
+              <h1 className="text-xl font-bold text-[#073D35]">طلب ترخيص تجمع / فعالية مدنية</h1>
+              <p className="text-[10px] text-gray-500 mt-1">وثيقة تنظيمية مخصصة للتقديم للجهات الإدارية المختصة</p>
+            </div>
+            <div className="text-[10px] text-gray-600 text-left">
+              <p>المرفقات: ( &nbsp; &nbsp; &nbsp; &nbsp; )</p>
+            </div>
           </div>
 
-          <div className="mb-6">
-            <h2 className="mb-4 text-xl font-bold">
+          {/* مقدمة المعروض */}
+          <div className="mb-4">
+            <h2 className="mb-2 text-sm font-bold">
               السيد محافظ {formData.governorate} المحترم،
             </h2>
-
-            <p className="text-justify leading-loose">
+            <p className="text-[12px] text-justify leading-relaxed font-medium">
               نحن اللجنة المنظمة المذكورة تفاصيلها أدناه، نتقدم لمقامكم بطلب
-              الموافقة على تنظيم ({formData.eventType}) تحت عنوان{" "}
+              الموافقة على تنظيم <strong>({formData.eventType})</strong> تحت عنوان{" "}
               <strong>&quot;{formData.eventTitle}&quot;</strong>، وذلك وفقاً
-              للبيانات والتعهدات التالية.
+              للبيانات والتعهدات المدونة في هذا المستند، راجين موافقتكم الكريمة للإيعاز لمن يلزم.
             </p>
           </div>
 
-          <div className="mb-8 overflow-hidden rounded-lg border border-black">
-            <div className="border-b border-black bg-gray-100 p-2 font-bold">
-              أولاً: تفاصيل الفعالية
+          {/* جدول بيانات الفعالية */}
+          <div className="mb-5 overflow-hidden rounded-lg border border-gray-400">
+            <div className="border-b border-gray-400 bg-gray-100 px-3 py-1.5 text-[12px] font-bold">
+              أولاً: بيانات وتفاصيل الفعالية
             </div>
-
-            <table className="w-full text-sm">
+            <table className="w-full text-[11px]">
               <tbody>
                 <tr className="border-b border-gray-300">
-                  <td className="w-1/3 bg-gray-50 p-3 font-bold">
-                    اسم الفعالية
-                  </td>
-                  <td className="p-3">{formData.eventTitle}</td>
+                  <td className="w-1/4 bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">اسم الفعالية</td>
+                  <td className="px-3 py-1.5">{formData.eventTitle}</td>
                 </tr>
-
                 <tr className="border-b border-gray-300">
-                  <td className="bg-gray-50 p-3 font-bold">النوع</td>
-                  <td className="p-3">{formData.eventType}</td>
+                  <td className="bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">نوع الفعالية</td>
+                  <td className="px-3 py-1.5">{formData.eventType}</td>
                 </tr>
-
                 <tr className="border-b border-gray-300">
-                  <td className="bg-gray-50 p-3 font-bold">المكان</td>
-                  <td className="p-3">
-                    {formData.governorate} - {formData.city} -{" "}
-                    {formData.location}
+                  <td className="bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">المكان</td>
+                  <td className="px-3 py-1.5 font-medium">
+                    {formData.governorate} - {formData.city} - {formData.location}
                   </td>
                 </tr>
-
                 <tr className="border-b border-gray-300">
-                  <td className="bg-gray-50 p-3 font-bold">التاريخ والوقت</td>
-                  <td className="p-3">
-                    {formData.eventDate} | من {formData.startTime} إلى{" "}
-                    {formData.endTime}
+                  <td className="bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">التاريخ والوقت</td>
+                  <td className="px-3 py-1.5">
+                    بتاريخ {formData.eventDate} | من الساعة {formData.startTime} إلى {formData.endTime}
                   </td>
                 </tr>
-
                 <tr className="border-b border-gray-300">
-                  <td className="bg-gray-50 p-3 font-bold">العدد المتوقع</td>
-                  <td className="p-3">{formData.expectedAttendees} شخص</td>
+                  <td className="bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">العدد المتوقع</td>
+                  <td className="px-3 py-1.5">{formData.expectedAttendees} شخص</td>
                 </tr>
-
                 <tr className="border-b border-gray-300">
-                  <td className="bg-gray-50 p-3 font-bold">الهدف من الفعالية</td>
-                  <td className="p-3">{formData.eventGoal}</td>
+                  <td className="bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">الهدف من الفعالية</td>
+                  <td className="px-3 py-1.5 leading-relaxed">{formData.eventGoal}</td>
                 </tr>
-
                 {formData.route && (
                   <tr>
-                    <td className="bg-gray-50 p-3 font-bold">خط السير</td>
-                    <td className="p-3">{formData.route}</td>
+                    <td className="bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">خط السير</td>
+                    <td className="px-3 py-1.5">{formData.route}</td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
 
-          <div className="mb-8 overflow-hidden rounded-lg border border-black">
-            <div className="border-b border-black bg-gray-100 p-2 font-bold">
+          {/* جدول بيانات اللجنة */}
+          <div className="mb-5 overflow-hidden rounded-lg border border-gray-400">
+            <div className="border-b border-gray-400 bg-gray-100 px-3 py-1.5 text-[12px] font-bold">
               ثانياً: بيانات اللجنة المنظمة
             </div>
-
-            <table className="w-full text-sm">
+            <table className="w-full text-[11px] text-center">
               <thead>
                 <tr className="border-b border-gray-300 bg-gray-50">
-                  <th className="border-l border-gray-300 p-2 text-right">
-                    الصفة
-                  </th>
-                  <th className="border-l border-gray-300 p-2 text-right">
-                    الاسم الثلاثي
-                  </th>
-                  <th className="p-2 text-right">رقم الهاتف</th>
+                  <th className="border-l border-gray-300 px-2 py-1.5">الصفة</th>
+                  <th className="border-l border-gray-300 px-2 py-1.5">الاسم الثلاثي</th>
+                  <th className="border-l border-gray-300 px-2 py-1.5">رقم الهاتف</th>
+                  <th className="px-2 py-1.5">التوقيع الشخصي</th>
                 </tr>
               </thead>
-
               <tbody>
                 <tr className="border-b border-gray-300">
-                  <td className="border-l border-gray-300 p-2 font-bold">
-                    رئيس اللجنة
-                  </td>
-                  <td className="border-l border-gray-300 p-2">
-                    {formData.committeeHeadName}
-                  </td>
-                  <td className="p-2">{formData.committeeHeadPhone}</td>
+                  <td className="border-l border-gray-300 px-2 py-2 font-bold bg-gray-50">رئيس اللجنة</td>
+                  <td className="border-l border-gray-300 px-2 py-2">{formData.committeeHeadName}</td>
+                  <td className="border-l border-gray-300 px-2 py-2" dir="ltr">{formData.committeeHeadPhone}</td>
+                  <td className="px-2 py-2 text-gray-300">.......................</td>
                 </tr>
-
                 <tr className="border-b border-gray-300">
-                  <td className="border-l border-gray-300 p-2 font-bold">
-                    عضو لجنة 1
-                  </td>
-                  <td className="border-l border-gray-300 p-2">
-                    {formData.member1Name}
-                  </td>
-                  <td className="p-2">{formData.member1Phone || "-"}</td>
+                  <td className="border-l border-gray-300 px-2 py-2 font-bold bg-gray-50">عضو لجنة (1)</td>
+                  <td className="border-l border-gray-300 px-2 py-2">{formData.member1Name}</td>
+                  <td className="border-l border-gray-300 px-2 py-2" dir="ltr">{formData.member1Phone || "-"}</td>
+                  <td className="px-2 py-2 text-gray-300">.......................</td>
                 </tr>
-
                 <tr>
-                  <td className="border-l border-gray-300 p-2 font-bold">
-                    عضو لجنة 2
-                  </td>
-                  <td className="border-l border-gray-300 p-2">
-                    {formData.member2Name}
-                  </td>
-                  <td className="p-2">{formData.member2Phone || "-"}</td>
+                  <td className="border-l border-gray-300 px-2 py-2 font-bold bg-gray-50">عضو لجنة (2)</td>
+                  <td className="border-l border-gray-300 px-2 py-2">{formData.member2Name}</td>
+                  <td className="border-l border-gray-300 px-2 py-2" dir="ltr">{formData.member2Phone || "-"}</td>
+                  <td className="px-2 py-2 text-gray-300">.......................</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <div className="mb-12">
-            <h3 className="mb-2 font-bold">التعهدات والإقرارات:</h3>
-
-            <ul className="list-inside list-disc space-y-2 text-sm">
-              <li>نتعهد بأن كافة المعلومات المدونة في هذا الطلب صحيحة ودقيقة.</li>
-              <li>نتعهد بالالتزام بالطابع السلمي والقانوني للفعالية.</li>
-              <li>نتعهد بالالتزام بالمكان والزمان المحددين.</li>
-              <li>
-                نقر بأن هذا المستند تم إنشاؤه بواسطة منصة مستقلة ولا يعد
-                ترخيصاً رسمياً.
-              </li>
-            </ul>
+          {/* التعهدات */}
+          <div className="mb-8">
+            <h3 className="mb-2 text-[12px] font-bold">ثالثاً: التعهدات والإقرارات القانونية</h3>
+            <div className="rounded-lg border border-gray-300 p-3 bg-gray-50/50">
+              <ul className="list-inside list-disc space-y-1.5 text-[11px] font-medium leading-relaxed">
+                <li>نتعهد كعناصر لجنة منظمة بأن كافة المعلومات والبيانات المدونة أعلاه صحيحة ودقيقة، ونتحمل مسؤوليتها.</li>
+                <li>نتعهد بالالتزام التام بالطابع السلمي والقانوني للفعالية وعدم المساس بالممتلكات العامة أو الخاصة.</li>
+                <li>نتعهد بالالتزام الدقيق بالمكان والزمان المحددين وعدم الإخلال بالأمن أو الآداب العامة.</li>
+              </ul>
+            </div>
           </div>
 
-          <div className="mt-16 flex items-end justify-between border-t border-black pt-8">
-            <div className="w-1/3 text-center">
-              <p className="mb-8 font-bold">توقيع رئيس اللجنة</p>
-              <p>.......................................</p>
+          {/* التواقيع (في الأسفل) */}
+          <div className="mt-8 flex items-start justify-between border-t-2 border-dashed border-gray-400 pt-6 px-10">
+            <div className="text-center w-1/3">
+              <p className="mb-6 text-[12px] font-bold">توقيع رئيس اللجنة المنظمة</p>
+              <p className="text-gray-400">.............................................</p>
             </div>
+            <div className="text-center w-1/3">
+              <p className="mb-6 text-[12px] font-bold">تاريخ التقديم</p>
+              <p className="text-[12px] font-medium">....... / ....... / 202...</p>
+            </div>
+          </div>
 
-            <div className="w-1/3 text-center text-sm text-gray-500">
-              <p>تم توليد هذا المستند عبر منصة الفعاليات المدنية السورية</p>
-            </div>
-
-            <div className="w-1/3 text-center">
-              <p className="mb-8 font-bold">تاريخ التقديم</p>
-              <p>....... / ....... / 202...</p>
-            </div>
+          {/* تذييل المنصة (صغير جداً وأنيق في أسفل الورقة) */}
+          <div className="absolute bottom-0 left-0 right-0 border-t border-gray-200 pt-2 flex justify-between items-center opacity-60">
+            <p className="text-[9px] font-bold text-[#073D35]">منصة الفعاليات المدنية السورية</p>
+            <p className="text-[8px] text-gray-500">تم تجهيز هذا المستند إلكترونياً لتسهيل الإجراءات التنظيمية</p>
           </div>
         </div>
       </div>
