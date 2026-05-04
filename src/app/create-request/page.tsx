@@ -89,17 +89,31 @@ export default function CreateRequestPage() {
 
   if (isSubmitted && formData) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] py-12" dir="rtl">
+      <div className="min-h-screen bg-[#F9FAFB] py-12 arabic-premium-text" dir="rtl">
         <style jsx global>{`
           @media print {
+            body * {
+              visibility: hidden;
+            }
+            
             .no-print {
               display: none !important;
             }
 
+            #print-area, #print-area * {
+              visibility: visible;
+            }
+
             #print-area {
-              display: block !important;
-              font-family: var(--font-thmanyah), system-ui, sans-serif !important;
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              margin: 0;
+              padding: 0;
+              font-family: var(--font-thmanyah), 'Times New Roman', serif !important;
               color: #000000 !important;
+              background: #ffffff !important;
             }
 
             body {
@@ -108,12 +122,13 @@ export default function CreateRequestPage() {
               print-color-adjust: exact;
             }
 
+            /* إعدادات صفحة A4 وضغط الهوامش لضمان بقائها في صفحة واحدة */
             @page {
               size: A4 portrait;
-              margin: 12mm;
+              margin: 15mm; 
             }
 
-            /* إخفاء رابط الصفحة والتاريخ الافتراضي اللي بيحطه المتصفح */
+            /* إخفاء الروابط والتواريخ الافتراضية للمتصفح */
             @page {
               @top-left { content: none; }
               @top-right { content: none; }
@@ -171,158 +186,161 @@ export default function CreateRequestPage() {
           </div>
         </div>
 
-        {/* تصميم الـ PDF الجاهز للطباعة */}
-        <div
-          id="print-area"
-          className="hidden bg-white text-black relative min-h-[260mm]"
-          dir="rtl"
-        >
-          {/* ترويسة المستند (Header) */}
-          <div className="mb-6 flex items-end justify-between border-b-2 border-[#073D35] pb-4">
-            <div className="text-[10px] text-gray-600 space-y-1 font-medium">
-              <p>رقم الطلب المرجعي: <span className="font-bold text-black">{requestNumber}</span></p>
-              <p>تاريخ الإنشاء: <span className="font-bold text-black">{new Date().toLocaleDateString("ar-SY")}</span></p>
+        {/* ========================================================
+            تصميم الـ PDF الاحترافي للطباعة (يظهر فقط عند الطباعة)
+        ======================================================== */}
+        <div id="print-area" className="hidden" dir="rtl">
+          
+          {/* الترويسة الرسمية */}
+          <div className="border-b-[2px] border-black pb-3 mb-4 flex justify-between items-start">
+            <div className="text-[10pt] font-bold leading-tight">
+              <p>الرقم الإشاري: <span className="font-normal" dir="ltr">{requestNumber}</span></p>
+              <p>التاريخ: <span className="font-normal">{new Date().toLocaleDateString("ar-SY")}</span></p>
             </div>
+            
             <div className="text-center">
-              <h1 className="text-xl font-bold text-[#073D35]">طلب ترخيص تجمع / فعالية مدنية</h1>
-              <p className="text-[10px] text-gray-500 mt-1">وثيقة تنظيمية مخصصة للتقديم للجهات الإدارية المختصة</p>
+              <h1 className="text-[16pt] font-bold underline decoration-2 underline-offset-4 mb-1">طلب ترخيص فعالية مدنية</h1>
+              <p className="text-[10pt] font-bold">نموذج تصريح رسمي</p>
             </div>
-            <div className="text-[10px] text-gray-600 text-left">
-              <p>المرفقات: ( &nbsp; &nbsp; &nbsp; &nbsp; )</p>
+            
+            <div className="text-[10pt] font-bold leading-tight text-right w-[120px]">
+              <p>المرفقات:</p>
+              <p className="font-normal text-[9pt] mt-1">- صور هويات اللجنة</p>
+              <p className="font-normal text-[9pt]">- ..........................</p>
             </div>
           </div>
 
-          {/* مقدمة المعروض */}
+          {/* المقدمة والمعروض */}
           <div className="mb-4">
-            <h2 className="mb-2 text-sm font-bold">
+            <h2 className="text-[12pt] font-bold mb-2">
               السيد محافظ {formData.governorate} المحترم،
             </h2>
-            <p className="text-[12px] text-justify leading-relaxed font-medium">
-              نحن اللجنة المنظمة المذكورة تفاصيلها أدناه، نتقدم لمقامكم بطلب
-              الموافقة على تنظيم <strong>({formData.eventType})</strong> تحت عنوان{" "}
-              <strong>&quot;{formData.eventTitle}&quot;</strong>، وذلك وفقاً
-              للبيانات والتعهدات المدونة في هذا المستند، راجين موافقتكم الكريمة للإيعاز لمن يلزم.
+            <p className="text-[11pt] leading-[1.6] text-justify">
+              نحن الموقعين أدناه (اللجنة المنظمة)، نتقدم لمقامكم بهذا الطلب للحصول على الموافقة الرسمية لتنظيم <strong>({formData.eventType})</strong> تحت عنوان <strong>&quot;{formData.eventTitle}&quot;</strong>. نرجو من سيادتكم التفضل بالاطلاع على التفاصيل المدونة في هذا المستند والإيعاز لمن يلزم بالموافقة، وفقاً للأنظمة والقوانين المرعية.
             </p>
           </div>
 
-          {/* جدول بيانات الفعالية */}
-          <div className="mb-5 overflow-hidden rounded-lg border border-gray-400">
-            <div className="border-b border-gray-400 bg-gray-100 px-3 py-1.5 text-[12px] font-bold">
-              أولاً: بيانات وتفاصيل الفعالية
+          {/* الجدول الأول: تفاصيل الفعالية */}
+          <div className="mb-4">
+            <div className="text-[11pt] font-bold bg-gray-200 border border-black border-b-0 px-2 py-1">
+              أولاً: تفاصيل الفعالية المخطط لها
             </div>
-            <table className="w-full text-[11px]">
+            <table className="w-full text-[10pt] border-collapse border border-black">
               <tbody>
-                <tr className="border-b border-gray-300">
-                  <td className="w-1/4 bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">اسم الفعالية</td>
-                  <td className="px-3 py-1.5">{formData.eventTitle}</td>
+                <tr>
+                  <td className="w-[120px] font-bold border border-black px-2 py-1.5 bg-gray-50">عنوان الفعالية</td>
+                  <td className="border border-black px-2 py-1.5">{formData.eventTitle}</td>
                 </tr>
-                <tr className="border-b border-gray-300">
-                  <td className="bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">نوع الفعالية</td>
-                  <td className="px-3 py-1.5">{formData.eventType}</td>
+                <tr>
+                  <td className="font-bold border border-black px-2 py-1.5 bg-gray-50">النوع والمجال</td>
+                  <td className="border border-black px-2 py-1.5">{formData.eventType}</td>
                 </tr>
-                <tr className="border-b border-gray-300">
-                  <td className="bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">المكان</td>
-                  <td className="px-3 py-1.5 font-medium">
+                <tr>
+                  <td className="font-bold border border-black px-2 py-1.5 bg-gray-50">المكان بالتفصيل</td>
+                  <td className="border border-black px-2 py-1.5">
                     {formData.governorate} - {formData.city} - {formData.location}
                   </td>
                 </tr>
-                <tr className="border-b border-gray-300">
-                  <td className="bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">التاريخ والوقت</td>
-                  <td className="px-3 py-1.5">
-                    بتاريخ {formData.eventDate} | من الساعة {formData.startTime} إلى {formData.endTime}
+                <tr>
+                  <td className="font-bold border border-black px-2 py-1.5 bg-gray-50">الزمان والمدة</td>
+                  <td className="border border-black px-2 py-1.5">
+                    الموافق {formData.eventDate} | ممتدة من الساعة {formData.startTime} إلى {formData.endTime}
                   </td>
                 </tr>
-                <tr className="border-b border-gray-300">
-                  <td className="bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">العدد المتوقع</td>
-                  <td className="px-3 py-1.5">{formData.expectedAttendees} شخص</td>
+                <tr>
+                  <td className="font-bold border border-black px-2 py-1.5 bg-gray-50">الحضور المتوقع</td>
+                  <td className="border border-black px-2 py-1.5">{formData.expectedAttendees} شخص تقريباً</td>
                 </tr>
-                <tr className="border-b border-gray-300">
-                  <td className="bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">الهدف من الفعالية</td>
-                  <td className="px-3 py-1.5 leading-relaxed">{formData.eventGoal}</td>
+                <tr>
+                  <td className="font-bold border border-black px-2 py-1.5 bg-gray-50">هدف الفعالية</td>
+                  <td className="border border-black px-2 py-1.5 leading-relaxed">{formData.eventGoal}</td>
                 </tr>
                 {formData.route && (
                   <tr>
-                    <td className="bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">خط السير</td>
-                    <td className="px-3 py-1.5">{formData.route}</td>
+                    <td className="font-bold border border-black px-2 py-1.5 bg-gray-50">خط السير</td>
+                    <td className="border border-black px-2 py-1.5 leading-relaxed">{formData.route}</td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
 
-          {/* جدول بيانات اللجنة */}
-          <div className="mb-5 overflow-hidden rounded-lg border border-gray-400">
-            <div className="border-b border-gray-400 bg-gray-100 px-3 py-1.5 text-[12px] font-bold">
-              ثانياً: بيانات اللجنة المنظمة
+          {/* الجدول الثاني: بيانات اللجنة */}
+          <div className="mb-4">
+            <div className="text-[11pt] font-bold bg-gray-200 border border-black border-b-0 px-2 py-1">
+              ثانياً: بيانات اللجنة المنظمة (مقدمي الطلب)
             </div>
-            <table className="w-full text-[11px] text-center">
+            <table className="w-full text-[10pt] text-center border-collapse border border-black">
               <thead>
-                <tr className="border-b border-gray-300 bg-gray-50">
-                  <th className="border-l border-gray-300 px-2 py-1.5">الصفة</th>
-                  <th className="border-l border-gray-300 px-2 py-1.5">الاسم الثلاثي</th>
-                  <th className="border-l border-gray-300 px-2 py-1.5">رقم الهاتف</th>
-                  <th className="px-2 py-1.5">التوقيع الشخصي</th>
+                <tr className="bg-gray-50">
+                  <th className="font-bold border border-black px-2 py-1">الصفة</th>
+                  <th className="font-bold border border-black px-2 py-1">الاسم الثلاثي</th>
+                  <th className="font-bold border border-black px-2 py-1">رقم الهاتف</th>
+                  <th className="font-bold border border-black px-2 py-1 w-[120px]">التوقيع</th>
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-b border-gray-300">
-                  <td className="border-l border-gray-300 px-2 py-2 font-bold bg-gray-50">رئيس اللجنة</td>
-                  <td className="border-l border-gray-300 px-2 py-2">{formData.committeeHeadName}</td>
-                  <td className="border-l border-gray-300 px-2 py-2" dir="ltr">{formData.committeeHeadPhone}</td>
-                  <td className="px-2 py-2 text-gray-300">.......................</td>
-                </tr>
-                <tr className="border-b border-gray-300">
-                  <td className="border-l border-gray-300 px-2 py-2 font-bold bg-gray-50">عضو لجنة (1)</td>
-                  <td className="border-l border-gray-300 px-2 py-2">{formData.member1Name}</td>
-                  <td className="border-l border-gray-300 px-2 py-2" dir="ltr">{formData.member1Phone || "-"}</td>
-                  <td className="px-2 py-2 text-gray-300">.......................</td>
+                <tr>
+                  <td className="font-bold border border-black px-2 py-1.5">رئيس اللجنة</td>
+                  <td className="border border-black px-2 py-1.5">{formData.committeeHeadName}</td>
+                  <td className="border border-black px-2 py-1.5" dir="ltr">{formData.committeeHeadPhone}</td>
+                  <td className="border border-black px-2 py-1.5"></td>
                 </tr>
                 <tr>
-                  <td className="border-l border-gray-300 px-2 py-2 font-bold bg-gray-50">عضو لجنة (2)</td>
-                  <td className="border-l border-gray-300 px-2 py-2">{formData.member2Name}</td>
-                  <td className="border-l border-gray-300 px-2 py-2" dir="ltr">{formData.member2Phone || "-"}</td>
-                  <td className="px-2 py-2 text-gray-300">.......................</td>
+                  <td className="font-bold border border-black px-2 py-1.5">عضو مفوض</td>
+                  <td className="border border-black px-2 py-1.5">{formData.member1Name}</td>
+                  <td className="border border-black px-2 py-1.5" dir="ltr">{formData.member1Phone || "---"}</td>
+                  <td className="border border-black px-2 py-1.5"></td>
+                </tr>
+                <tr>
+                  <td className="font-bold border border-black px-2 py-1.5">عضو مفوض</td>
+                  <td className="border border-black px-2 py-1.5">{formData.member2Name}</td>
+                  <td className="border border-black px-2 py-1.5" dir="ltr">{formData.member2Phone || "---"}</td>
+                  <td className="border border-black px-2 py-1.5"></td>
                 </tr>
               </tbody>
             </table>
+            {formData.organizationName && (
+              <p className="text-[10pt] mt-1 text-right font-bold">
+                الجهة الاعتبارية/المنظمة: <span className="font-normal">{formData.organizationName}</span>
+              </p>
+            )}
           </div>
 
-          {/* التعهدات */}
-          <div className="mb-8">
-            <h3 className="mb-2 text-[12px] font-bold">ثالثاً: التعهدات والإقرارات القانونية</h3>
-            <div className="rounded-lg border border-gray-300 p-3 bg-gray-50/50">
-              <ul className="list-inside list-disc space-y-1.5 text-[11px] font-medium leading-relaxed">
-                <li>نتعهد كعناصر لجنة منظمة بأن كافة المعلومات والبيانات المدونة أعلاه صحيحة ودقيقة، ونتحمل مسؤوليتها.</li>
-                <li>نتعهد بالالتزام التام بالطابع السلمي والقانوني للفعالية وعدم المساس بالممتلكات العامة أو الخاصة.</li>
-                <li>نتعهد بالالتزام الدقيق بالمكان والزمان المحددين وعدم الإخلال بالأمن أو الآداب العامة.</li>
-              </ul>
+          {/* الإقرارات */}
+          <div className="mb-6">
+            <h3 className="text-[11pt] font-bold mb-1">ثالثاً: الإقرارات القانونية والتعهدات</h3>
+            <ul className="list-disc list-inside text-[10pt] leading-[1.5] mr-2">
+              <li>نتعهد بأن الفعالية المذكورة هي ذات طابع سلمي بحت ولا تخالف الأنظمة والقوانين والآداب العامة.</li>
+              <li>نتعهد بالالتزام الدقيق بالزمان والمكان المحددين في هذا الطلب، ونتحمل المسؤولية عن أي تجاوز.</li>
+              <li>نتعهد بالحفاظ على الممتلكات العامة والخاصة وتنظيف المكان بعد الانتهاء.</li>
+              <li>نتحمل بصفتنا الشخصية المسؤولية القانونية الكاملة عن صحة ودقة البيانات المدونة أعلاه.</li>
+            </ul>
+          </div>
+
+          {/* منطقة التواقيع */}
+          <div className="mt-8 flex justify-around text-center text-[11pt] font-bold">
+            <div>
+              <p className="mb-8">توقيع رئيس اللجنة</p>
+              <p>.............................</p>
+            </div>
+            <div>
+              <p className="mb-8">توقيع العضو الأول</p>
+              <p>.............................</p>
+            </div>
+            <div>
+              <p className="mb-8">توقيع العضو الثاني</p>
+              <p>.............................</p>
             </div>
           </div>
 
-          {/* التواقيع (في الأسفل) */}
-          <div className="mt-8 flex items-start justify-between border-t-2 border-dashed border-gray-400 pt-6 px-10">
-            <div className="text-center w-1/3">
-              <p className="mb-6 text-[12px] font-bold">توقيع رئيس اللجنة المنظمة</p>
-              <p className="text-gray-400">.............................................</p>
-            </div>
-            <div className="text-center w-1/3">
-              <p className="mb-6 text-[12px] font-bold">تاريخ التقديم</p>
-              <p className="text-[12px] font-medium">....... / ....... / 202...</p>
-            </div>
-          </div>
-
-          {/* تذييل المنصة (صغير جداً وأنيق في أسفل الورقة) */}
-          <div className="absolute bottom-0 left-0 right-0 border-t border-gray-200 pt-2 flex justify-between items-center opacity-60">
-            <p className="text-[9px] font-bold text-[#073D35]">منصة الفعاليات المدنية السورية</p>
-            <p className="text-[8px] text-gray-500">تم تجهيز هذا المستند إلكترونياً لتسهيل الإجراءات التنظيمية</p>
-          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] py-12" dir="rtl">
+    <div className="min-h-screen bg-[#F9FAFB] py-12 arabic-premium-text" dir="rtl">
       <div className="container mx-auto max-w-4xl px-4">
         <div className="mb-10 flex flex-col items-center text-center">
           <Link
@@ -342,7 +360,7 @@ export default function CreateRequestPage() {
             إنشاء طلب ترخيص فعالية
           </h1>
 
-          <p className="max-w-xl text-gray-500">
+          <p className="max-w-xl text-gray-500 font-medium">
             يرجى تعبئة البيانات التالية بدقة. سيقوم النظام بتنسيقها في مستند
             PDF رسمي جاهز للطباعة والتقديم المباشر للجهات المعنية.
           </p>
@@ -363,7 +381,7 @@ export default function CreateRequestPage() {
                 <input
                   type="text"
                   {...register("fullName")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                   placeholder="الاسم الثلاثي"
                 />
                 <InputError error={errors.fullName?.message} />
@@ -376,7 +394,7 @@ export default function CreateRequestPage() {
                 <input
                   type="email"
                   {...register("email")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                   placeholder="example@domain.com"
                   dir="ltr"
                 />
@@ -390,7 +408,7 @@ export default function CreateRequestPage() {
                 <input
                   type="tel"
                   {...register("phone")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                   placeholder="09xxxxxx"
                   dir="ltr"
                 />
@@ -404,7 +422,7 @@ export default function CreateRequestPage() {
                 <input
                   type="text"
                   {...register("submitterRole")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                   placeholder="مثال: رئيس اللجنة، منسق..."
                 />
                 <InputError error={errors.submitterRole?.message} />
@@ -417,7 +435,7 @@ export default function CreateRequestPage() {
                 <input
                   type="text"
                   {...register("organizationName")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                   placeholder="إن وجدت جهة راعية أو منظمة"
                 />
               </div>
@@ -438,7 +456,7 @@ export default function CreateRequestPage() {
                 <input
                   type="text"
                   {...register("eventTitle")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                   placeholder="العنوان الرسمي الذي سيظهر في المستند"
                 />
                 <InputError error={errors.eventTitle?.message} />
@@ -450,7 +468,7 @@ export default function CreateRequestPage() {
                 </label>
                 <select
                   {...register("eventType")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                 >
                   <option value="">اختر النوع...</option>
                   {EVENT_TYPES.map((type) => (
@@ -468,7 +486,7 @@ export default function CreateRequestPage() {
                 </label>
                 <select
                   {...register("governorate")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                 >
                   <option value="">اختر المحافظة...</option>
                   {GOVERNORATES.map((gov) => (
@@ -487,7 +505,7 @@ export default function CreateRequestPage() {
                 <input
                   type="text"
                   {...register("city")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                   placeholder="الناحية أو المدينة"
                 />
                 <InputError error={errors.city?.message} />
@@ -500,7 +518,7 @@ export default function CreateRequestPage() {
                 <input
                   type="text"
                   {...register("location")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                   placeholder="الساحة، الحديقة، المركز..."
                 />
                 <InputError error={errors.location?.message} />
@@ -513,7 +531,7 @@ export default function CreateRequestPage() {
                 <input
                   type="date"
                   {...register("eventDate")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                 />
                 <InputError error={errors.eventDate?.message} />
               </div>
@@ -526,7 +544,7 @@ export default function CreateRequestPage() {
                   type="number"
                   min={1}
                   {...register("expectedAttendees", { valueAsNumber: true })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                   placeholder="رقم تقريبي"
                 />
                 <InputError error={errors.expectedAttendees?.message} />
@@ -539,7 +557,7 @@ export default function CreateRequestPage() {
                 <input
                   type="time"
                   {...register("startTime")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                 />
                 <InputError error={errors.startTime?.message} />
               </div>
@@ -551,7 +569,7 @@ export default function CreateRequestPage() {
                 <input
                   type="time"
                   {...register("endTime")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                 />
                 <InputError error={errors.endTime?.message} />
               </div>
@@ -563,7 +581,7 @@ export default function CreateRequestPage() {
                 <textarea
                   {...register("route")}
                   rows={2}
-                  className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                   placeholder="اكتب خط السير إن وجد..."
                 />
               </div>
@@ -575,7 +593,7 @@ export default function CreateRequestPage() {
                 <textarea
                   {...register("eventGoal")}
                   rows={3}
-                  className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50"
+                  className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
                   placeholder="اشرح الهدف بشكل رسمي وواضح لتقديمه في الطلب..."
                 />
                 <InputError error={errors.eventGoal?.message} />
@@ -599,7 +617,7 @@ export default function CreateRequestPage() {
                       type="text"
                       {...register("committeeHeadName")}
                       placeholder="الاسم الثلاثي *"
-                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A]"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium"
                     />
                     <InputError error={errors.committeeHeadName?.message} />
                   </div>
@@ -609,7 +627,7 @@ export default function CreateRequestPage() {
                       type="tel"
                       {...register("committeeHeadPhone")}
                       placeholder="رقم الهاتف *"
-                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A]"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium"
                       dir="ltr"
                     />
                     <InputError error={errors.committeeHeadPhone?.message} />
@@ -620,7 +638,7 @@ export default function CreateRequestPage() {
                       type="email"
                       {...register("committeeHeadEmail")}
                       placeholder="البريد الإلكتروني *"
-                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A]"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium"
                       dir="ltr"
                     />
                     <InputError error={errors.committeeHeadEmail?.message} />
@@ -638,7 +656,7 @@ export default function CreateRequestPage() {
                         type="text"
                         {...register("member1Name")}
                         placeholder="الاسم الثلاثي *"
-                        className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A]"
+                        className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium"
                       />
                       <InputError error={errors.member1Name?.message} />
                     </div>
@@ -647,7 +665,7 @@ export default function CreateRequestPage() {
                       type="tel"
                       {...register("member1Phone")}
                       placeholder="رقم الهاتف اختياري"
-                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A]"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium"
                       dir="ltr"
                     />
                   </div>
@@ -662,7 +680,7 @@ export default function CreateRequestPage() {
                         type="text"
                         {...register("member2Name")}
                         placeholder="الاسم الثلاثي *"
-                        className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A]"
+                        className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium"
                       />
                       <InputError error={errors.member2Name?.message} />
                     </div>
@@ -671,7 +689,7 @@ export default function CreateRequestPage() {
                       type="tel"
                       {...register("member2Phone")}
                       placeholder="رقم الهاتف اختياري"
-                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A]"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium"
                       dir="ltr"
                     />
                   </div>
@@ -699,7 +717,7 @@ export default function CreateRequestPage() {
                   />
 
                   <div>
-                    <span className="block font-medium text-gray-700">
+                    <span className="block font-bold text-gray-700">
                       {pledge.text}
                     </span>
                     <InputError error={errors[pledge.name]?.message} />
@@ -719,7 +737,7 @@ export default function CreateRequestPage() {
               {!isSubmitting && <ArrowRight className="h-5 w-5 rotate-180" />}
             </button>
 
-            <p className="mt-4 text-sm text-gray-400">
+            <p className="mt-4 text-sm font-medium text-gray-400">
               بالضغط على تأكيد، سيتم توليد مستند PDF جاهز للطباعة.
             </p>
           </div>
