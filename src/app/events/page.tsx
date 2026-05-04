@@ -189,7 +189,7 @@ export default function EventsPage() {
                       <span className="inline-block px-3 py-1.5 bg-[#F5F8F7] text-[#073D35] text-xs font-bold rounded-lg border border-[#E8F0EE]">
                         {event.type}
                       </span>
-                      <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border bg-white ${statusStyle.text} ${statusStyle.border}`}>
+                      <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border bg-white ${statusStyle.color} ${statusStyle.border}`}>
                         <span className={`w-2 h-2 rounded-full ${statusStyle.pulse} ${statusStyle.pulse === 'bg-[#ef4444]' ? 'animate-pulse' : ''}`}></span>
                         <span className="text-[10px] font-bold">{statusStyle.label}</span>
                       </div>
