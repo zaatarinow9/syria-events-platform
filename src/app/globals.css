@@ -12,6 +12,7 @@ body {
   direction: rtl;
 }
 
+/* تخصيص شريط التمرير (Scrollbar) */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
@@ -27,7 +28,7 @@ body {
   background: #94a3b8; 
 }
 
-/* تنسيق احترافي للنافذة المنبثقة (Popup) */
+/* تنسيق احترافي للنافذة المنبثقة (Popup) في الخريطة */
 .leaflet-popup-content-wrapper {
   background: transparent !important;
   box-shadow: none !important;
@@ -52,6 +53,12 @@ body {
 .leaflet-popup-tip {
   background: white !important;
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1) !important;
+}
+
+/* تفعيل الميزات الاحترافية للخط (OpenType Features) */
+.arabic-premium-text {
+  font-feature-settings: "swsh" 1, "ss01" 1, "ss02" 1, "ss03" 1, "jalt" 1, "calt" 1, "rlig" 1;
+  text-rendering: optimizeLegibility;
 }
 
 /* تنسيقات الطباعة وتوليد الـ PDF من المتصفح */
