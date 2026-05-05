@@ -89,44 +89,48 @@ export default function CreateRequestPage() {
 
   if (isSubmitted && formData) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] py-12" dir="rtl">
+      <div className="min-h-screen bg-[#F9FAFB] py-12 arabic-premium-text print-reset" dir="rtl">
         <style jsx global>{`
-          @media print {
-            body * {
-              visibility: hidden;
-            }
+          .print-only {
+            display: none;
+          }
 
+          @media print {
+            /* إخفاء الواجهة ومساحتها بالكامل */
             .no-print {
               display: none !important;
             }
 
-            #print-area, #print-area * {
-              visibility: visible;
+            /* تصفير هوامش الخلفية لعدم خلق صفحات فارغة */
+            .print-reset {
+              min-height: 0 !important;
+              padding: 0 !important;
+              background-color: white !important;
             }
 
-            #print-area {
-              position: absolute;
-              left: 0;
-              top: 0;
+            /* إظهار منطقة الطباعة وتنسيقها */
+            .print-only {
+              display: block !important;
               width: 100%;
-              margin: 0;
-              padding: 0;
-              font-family: var(--font-thmanyah), system-ui, sans-serif !important;
               color: #000000 !important;
+              background-color: #ffffff !important;
+              font-family: var(--font-thmanyah), 'Times New Roman', serif !important;
             }
 
             body {
-              background: #ffffff !important;
+              background-color: #ffffff !important;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
+              margin: 0;
             }
 
+            /* ضبط الورقة A4 بهوامش مناسبة */
             @page {
               size: A4 portrait;
               margin: 12mm;
             }
 
-            /* إخفاء رابط الصفحة والتاريخ الافتراضي اللي بيحطه المتصفح */
+            /* إخفاء روابط المتصفح والتواريخ الافتراضية في الطباعة */
             @page {
               @top-left { content: none; }
               @top-right { content: none; }
@@ -136,6 +140,7 @@ export default function CreateRequestPage() {
           }
         `}</style>
 
+        {/* واجهة النجاح (تظهر على الشاشة فقط وتختفي بالطباعة) */}
         <div className="container mx-auto max-w-3xl px-4 no-print">
           <div className="mb-8 rounded-3xl border border-gray-200 bg-white p-8 text-center shadow-lg md:p-12">
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#073D35]/20 bg-[#073D35]/10">
@@ -184,12 +189,8 @@ export default function CreateRequestPage() {
           </div>
         </div>
 
-        {/* تصميم الـ PDF الجاهز للطباعة */}
-        <div
-          id="print-area"
-          className="hidden bg-white text-black relative"
-          dir="rtl"
-        >
+        {/* تصميم الـ PDF الجاهز للطباعة (يظهر فقط أثناء الطباعة) */}
+        <div id="print-area" className="print-only bg-white text-black" dir="rtl">
           {/* ترويسة المستند (Header) */}
           <div className="mb-6 flex items-end justify-between border-b-2 border-[#073D35] pb-4">
             <div className="text-[10pt] text-gray-600 space-y-1 font-medium">
@@ -335,7 +336,7 @@ export default function CreateRequestPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] py-12" dir="rtl">
+    <div className="min-h-screen bg-[#F9FAFB] py-12 arabic-premium-text" dir="rtl">
       <div className="container mx-auto max-w-4xl px-4">
         <div className="mb-10 flex flex-col items-center text-center">
           <Link
