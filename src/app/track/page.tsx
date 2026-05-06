@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, ArrowRight, ShieldCheck } from "lucide-react";
-import Link from "next/link";
 
 export default function TrackPage() {
   const [code, setCode] = useState("");
