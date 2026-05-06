@@ -55,11 +55,7 @@ body {
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1) !important;
 }
 
-/* تفعيل الميزات الاحترافية للخط (OpenType Features) */
-.arabic-premium-text {
-  font-feature-settings: "swsh" 1, "ss01" 1, "ss02" 1, "ss03" 1, "jalt" 1, "calt" 1, "rlig" 1;
-  text-rendering: optimizeLegibility;
-}
+
 
 /* تنسيقات الطباعة وتوليد الـ PDF من المتصفح */
 @media print {

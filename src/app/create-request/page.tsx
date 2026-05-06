@@ -25,55 +25,26 @@ import { GOVERNORATES } from "@/lib/constants/governorates";
 import { EVENT_TYPES } from "@/lib/constants/eventTypes";
 
 const pledges: Array<{ name: PledgeFieldName; text: string }> = [
-  {
-    name: "pledgeTrueInfo",
-    text: "أتعهد بأن كافة المعلومات المدخلة صحيحة ودقيقة.",
-  },
-  {
-    name: "pledgePeaceful",
-    text: "أتعهد بأن الفعالية ذات طابع سلمي بحت.",
-  },
-  {
-    name: "pledgeCommitment",
-    text: "أتعهد بالالتزام بالمكان والوقت المحددين في هذا الطلب.",
-  },
-  {
-    name: "pledgeNoMisleading",
-    text: "أتعهد بعدم نشر أي معلومات مضللة حول الفعالية.",
-  },
-  {
-    name: "pledgeAcknowledgment",
-    text: "أقر بأن المنصة لا تمنح ترخيصاً وأن التقديم للجهات المختصة هو مسؤوليتي.",
-  },
+  { name: "pledgeTrueInfo", text: "أتعهد بأن كافة المعلومات المدخلة صحيحة ودقيقة." },
+  { name: "pledgePeaceful", text: "أتعهد بأن الفعالية ذات طابع سلمي بحت." },
+  { name: "pledgeCommitment", text: "أتعهد بالالتزام بالمكان والوقت المحددين في هذا الطلب." },
+  { name: "pledgeNoMisleading", text: "أتعهد بعدم نشر أي معلومات مضللة حول الفعالية." },
+  { name: "pledgeAcknowledgment", text: "أقر بأن المنصة لا تمنح ترخيصاً وأن التقديم للجهات المختصة هو مسؤوليتي." },
 ];
 
 function InputError({ error }: { error?: string }) {
   if (!error) return null;
-
   return <p className="mt-1.5 text-xs font-bold text-red-500">{error}</p>;
 }
 
-function generateRequestNumber() {
-  return `SY-EVT-${new Date().getFullYear()}-${Math.floor(
-    Math.random() * 100000
-  )
-    .toString()
-    .padStart(5, "0")}`;
-}
-
-// دالة مساعدة لضمان ظهور الأرقام باللغة الإنجليزية في ملف الـ PDF
 const EnglishNumber = ({ children }: { children: React.ReactNode }) => (
-  <span style={{ fontFamily: "Arial, Helvetica, sans-serif" }} dir="ltr">
-    {children}
-  </span>
+  <span style={{ fontFamily: "Arial, Helvetica, sans-serif" }} dir="ltr">{children}</span>
 );
 
 export default function CreateRequestPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [requestNumber, setRequestNumber] = useState("");
-  const [formData, setFormData] = useState<PermitRequestFormValues | null>(
-    null
-  );
+  const [formData, setFormData] = useState<PermitRequestFormValues | null>(null);
 
   const {
     register,
@@ -84,19 +55,26 @@ export default function CreateRequestPage() {
   });
 
   const onSubmit = async (data: PermitRequestFormValues) => {
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-
-    const generatedNumber = generateRequestNumber();
-
-    setRequestNumber(generatedNumber);
-    setFormData(data);
-    setIsSubmitted(true);
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    try {
+      const response = await fetch("/api/requests/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) throw new Error("فشل إرسال الطلب");
+      
+      const resData = await response.json();
+      setRequestNumber(resData.request_number);
+      setFormData(data);
+      setIsSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      alert("حدث خطأ أثناء إرسال الطلب، يرجى المحاولة لاحقاً.");
+    }
   };
 
   const handleDownloadPDF = () => {
-    // استدعاء الطباعة مباشرة (التي تم تنسيقها لتكون PDF نظيف)
     window.print();
   };
 
@@ -104,50 +82,20 @@ export default function CreateRequestPage() {
     return (
       <div className="min-h-screen bg-[#F9FAFB] py-12 arabic-premium-text print-reset" dir="rtl">
         <style jsx global>{`
-          .print-only {
-            display: none;
-          }
-
+          .print-only { display: none; }
           @media print {
-            /* إخفاء الواجهة ومساحتها بالكامل */
-            .no-print {
-              display: none !important;
-            }
-
-            /* تصفير هوامش الخلفية لعدم خلق صفحات فارغة */
-            .print-reset {
-              min-height: 0 !important;
-              padding: 0 !important;
-              background-color: white !important;
-            }
-
-            /* إظهار منطقة الطباعة وتنسيقها */
+            .no-print { display: none !important; }
+            .print-reset { min-height: 0 !important; padding: 0 !important; background-color: white !important; }
             .print-only {
               display: block !important;
               width: 100%;
               color: #000000 !important;
               background-color: #ffffff !important;
-              padding: 10mm 15mm !important; /* تقليل الهامش العلوي والسفلي لتوفير المساحة */
+              padding: 10mm 15mm !important;
               box-sizing: border-box !important;
             }
-
-            body {
-              background-color: #ffffff !important;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-              margin: 0 !important;
-              padding: 0 !important;
-            }
-
-            /* 
-             * المارجن 0 هنا سحري! 
-             * هو الذي يحذف رابط الموقع والتاريخ الافتراضي من المتصفح 
-             * ليظهر الـ PDF نظيف ورسمي بالكامل
-             */
-            @page {
-              size: A4 portrait;
-              margin: 0mm !important;
-            }
+            body { background-color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0 !important; padding: 0 !important; }
+            @page { size: A4 portrait; margin: 0mm !important; }
           }
         `}</style>
 
@@ -156,86 +104,48 @@ export default function CreateRequestPage() {
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#073D35]/20 bg-[#073D35]/10">
               <CheckCircle2 className="h-10 w-10 text-[#073D35]" />
             </div>
-
-            <h2 className="mb-3 text-3xl font-bold text-gray-900">
-              تم تجهيز الطلب بنجاح
-            </h2>
-
-            <p className="mb-8 text-gray-500">
-              رقم طلبك المرجعي في المنصة هو:
+            <h2 className="mb-3 text-3xl font-bold text-gray-900">تم تسجيل طلبك وتجهيز المستند</h2>
+            <p className="mb-8 text-gray-500 font-medium">
+              هذا هو الكود المرجعي الخاص بك. احتفظ به جيداً لتتمكن من تتبع طلبك وإرفاق الصور لاحقاً:
             </p>
-
-            <div className="mb-10 inline-block rounded-xl border border-[#C8A75A]/30 bg-[#FDFBF7] px-8 py-4 font-mono text-2xl font-bold tracking-wider text-[#C8A75A]">
+            <div className="mb-10 inline-block rounded-xl border border-[#C8A75A]/30 bg-[#FDFBF7] px-10 py-5 font-mono text-3xl font-bold tracking-[0.2em] text-[#C8A75A]">
               {requestNumber}
             </div>
-
             <div className="mb-8 flex flex-col justify-center gap-4 sm:flex-row">
               <button
                 type="button"
                 onClick={handleDownloadPDF}
                 className="flex items-center justify-center gap-2 rounded-xl bg-[#073D35] px-8 py-4 font-bold text-white shadow-md shadow-[#073D35]/20 transition-all hover:bg-[#052e28]"
-                title="اضغط للتحميل (اختر حفظ بتنسيق PDF من النافذة)"
               >
-                <Download className="h-5 w-5" />
-                تحميل كملف PDF
+                <Download className="h-5 w-5" /> تحميل وطباعة الـ PDF
               </button>
-
-              <button
-                type="button"
-                onClick={() => window.print()}
+              <Link
+                href="/track"
                 className="flex items-center justify-center gap-2 rounded-xl border border-[#073D35] bg-white px-8 py-4 font-bold text-[#073D35] transition-all hover:bg-gray-50"
               >
-                <Printer className="h-5 w-5" />
-                طباعة ورقية
-              </button>
-
-              <Link
-                href="/"
-                className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-8 py-4 font-bold text-gray-700 transition-all hover:bg-gray-100"
-              >
-                العودة للرئيسية
+                تتبع الطلب الآن
               </Link>
             </div>
-
             <div className="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50 p-5 text-right text-sm text-blue-800">
               <Info className="mt-0.5 h-5 w-5 shrink-0" />
               <p className="leading-relaxed">
-                <strong>تنويه للتحميل:</strong> عند الضغط على زر التحميل، ستفتح نافذة الطباعة الخاصة بالمتصفح، تأكد من اختيار <strong>&quot;حفظ بتنسيق PDF&quot; (Save as PDF)</strong> من قائمة الطابعات لتحميل الملف بدقة عالية.
+                <strong>الخطوة القادمة:</strong> قم بطباعة المستند، احصل على الموافقة من المحافظة، ثم ادخل لصفحة "تتبع الطلب" وادخل الكود لرفع صورة الموافقة.
               </p>
             </div>
           </div>
         </div>
 
-        {/* ========================================================
-            تصميم الـ PDF الاحترافي (يظهر فقط عند الطباعة/التحميل)
-        ======================================================== */}
         <div id="print-area" className="print-only bg-white text-black relative" dir="rtl">
-          
-          {/* الترويسة الرسمية (بدون اسم منصة وبدون تاريخ وبدون رقم) */}
           <div className="mb-4 text-center border-b-[2px] border-black pb-2 pt-2">
-            <h1 className="text-[14pt] font-bold underline decoration-2 underline-offset-4 mb-1">
-              طلب ترخيص تجمع
-            </h1>
+            <h1 className="text-[14pt] font-bold underline decoration-2 underline-offset-4 mb-1">طلب ترخيص تجمع / فعالية مدنية</h1>
+            <p className="text-[10pt] font-bold text-gray-800">نموذج تصريح رسمي مخصص للتقديم للجهات الإدارية المختصة</p>
           </div>
-
-          {/* المقدمة والمعروض */}
           <div className="mb-4">
-            <h2 className="mb-1 text-[11pt] font-bold">
-              السيد محافظ {formData.governorate} المحترم،
-            </h2>
-            <p className="text-[10pt] text-justify leading-[1.5] font-medium">
-              نحن اللجنة المنظمة المذكورة تفاصيلها أدناه، نتقدم لمقامكم بطلب
-              الموافقة على تنظيم <strong>({formData.eventType})</strong> تحت عنوان{" "}
-              <strong>&quot;{formData.eventTitle}&quot;</strong>، وذلك وفقاً
-              للبيانات والتعهدات المدونة في هذا المستند، راجين موافقتكم الكريمة للإيعاز لمن يلزم.
-            </p>
+            <h2 className="mb-1 text-[11pt] font-bold">السيد محافظ {formData.governorate} المحترم،</h2>
+            <p className="text-[10pt] text-justify leading-[1.5] font-medium">نحن اللجنة المنظمة المذكورة تفاصيلها أدناه، نتقدم لمقامكم بطلب الموافقة على تنظيم <strong>({formData.eventType})</strong> تحت عنوان <strong>&quot;{formData.eventTitle}&quot;</strong>، وذلك وفقاً للبيانات والتعهدات المدونة في هذا المستند، راجين موافقتكم الكريمة للإيعاز لمن يلزم.</p>
           </div>
-
-          {/* الجدول الأول: تفاصيل الفعالية */}
           <div className="mb-4 overflow-hidden rounded-lg border border-gray-400">
-            <div className="border-b border-gray-400 bg-gray-100 px-3 py-1.5 text-[10pt] font-bold">
-             بيانات وتفاصيل الفعالية
-            </div>
+            <div className="border-b border-gray-400 bg-gray-100 px-3 py-1.5 text-[10pt] font-bold">أولاً: بيانات وتفاصيل الفعالية</div>
             <table className="w-full text-[9.5pt] border-collapse">
               <tbody>
                 <tr className="border-b border-gray-300">
@@ -248,15 +158,11 @@ export default function CreateRequestPage() {
                 </tr>
                 <tr className="border-b border-gray-300">
                   <td className="bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">المكان</td>
-                  <td className="px-3 py-1.5 font-medium">
-                    {formData.governorate} - {formData.city} - {formData.location}
-                  </td>
+                  <td className="px-3 py-1.5 font-medium">{formData.governorate} - {formData.city} - {formData.location}</td>
                 </tr>
                 <tr className="border-b border-gray-300">
                   <td className="bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">التاريخ والوقت</td>
-                  <td className="px-3 py-1.5">
-                    بتاريخ <EnglishNumber>{formData.eventDate}</EnglishNumber> | من الساعة <EnglishNumber>{formData.startTime}</EnglishNumber> إلى <EnglishNumber>{formData.endTime}</EnglishNumber>
-                  </td>
+                  <td className="px-3 py-1.5">بتاريخ <EnglishNumber>{formData.eventDate}</EnglishNumber> | من الساعة <EnglishNumber>{formData.startTime}</EnglishNumber> إلى <EnglishNumber>{formData.endTime}</EnglishNumber></td>
                 </tr>
                 <tr className="border-b border-gray-300">
                   <td className="bg-gray-50 px-3 py-1.5 font-bold border-l border-gray-300">العدد المتوقع</td>
@@ -275,12 +181,8 @@ export default function CreateRequestPage() {
               </tbody>
             </table>
           </div>
-
-          {/* الجدول الثاني: بيانات اللجنة */}
           <div className="mb-4 overflow-hidden rounded-lg border border-gray-400">
-            <div className="border-b border-gray-400 bg-gray-100 px-3 py-1.5 text-[10pt] font-bold">
-               بيانات اللجنة المنظمة (مُقدّمي الطلب)
-            </div>
+            <div className="border-b border-gray-400 bg-gray-100 px-3 py-1.5 text-[10pt] font-bold">ثانياً: بيانات اللجنة المنظمة (مُقدّمي الطلب)</div>
             <table className="w-full text-[9.5pt] text-center border-collapse">
               <thead>
                 <tr className="border-b border-gray-300 bg-gray-50">
@@ -294,32 +196,24 @@ export default function CreateRequestPage() {
                 <tr className="border-b border-gray-300">
                   <td className="border-l border-gray-300 px-2 py-1.5 font-bold bg-gray-50">رئيس اللجنة</td>
                   <td className="border-l border-gray-300 px-2 py-1.5 font-bold">{formData.committeeHeadName}</td>
-                  <td className="border-l border-gray-300 px-2 py-1.5 font-bold">
-                    <EnglishNumber>{formData.committeeHeadPhone}</EnglishNumber>
-                  </td>
+                  <td className="border-l border-gray-300 px-2 py-1.5 font-bold"><EnglishNumber>{formData.committeeHeadPhone}</EnglishNumber></td>
                   <td className="px-2 py-1.5 text-gray-300">.................</td>
                 </tr>
                 <tr className="border-b border-gray-300">
                   <td className="border-l border-gray-300 px-2 py-1.5 font-bold bg-gray-50">عضو لجنة (1)</td>
                   <td className="border-l border-gray-300 px-2 py-1.5 font-bold">{formData.member1Name}</td>
-                  <td className="border-l border-gray-300 px-2 py-1.5 font-bold">
-                    <EnglishNumber>{formData.member1Phone || "---"}</EnglishNumber>
-                  </td>
+                  <td className="border-l border-gray-300 px-2 py-1.5 font-bold"><EnglishNumber>{formData.member1Phone || "---"}</EnglishNumber></td>
                   <td className="px-2 py-1.5 text-gray-300">.................</td>
                 </tr>
                 <tr>
                   <td className="border-l border-gray-300 px-2 py-1.5 font-bold bg-gray-50">عضو لجنة (2)</td>
                   <td className="border-l border-gray-300 px-2 py-1.5 font-bold">{formData.member2Name}</td>
-                  <td className="border-l border-gray-300 px-2 py-1.5 font-bold">
-                    <EnglishNumber>{formData.member2Phone || "---"}</EnglishNumber>
-                  </td>
+                  <td className="border-l border-gray-300 px-2 py-1.5 font-bold"><EnglishNumber>{formData.member2Phone || "---"}</EnglishNumber></td>
                   <td className="px-2 py-1.5 text-gray-300">.................</td>
                 </tr>
               </tbody>
             </table>
           </div>
-
-          {/* التعهدات */}
           <div className="mb-6">
             <h3 className="mb-2 text-[11pt] font-bold">التعهدات والإقرارات القانونية</h3>
             <div className="rounded-lg border border-gray-300 p-2.5 bg-gray-50">
@@ -330,8 +224,6 @@ export default function CreateRequestPage() {
               </ul>
             </div>
           </div>
-
-          {/* التواقيع (في الأسفل) */}
           <div className="flex items-start justify-around border-t border-black pt-4 px-4 mt-4">
             <div className="text-center w-1/3">
               <p className="mb-6 text-[10pt] font-bold">توقيع رئيس اللجنة المنظمة</p>
@@ -342,8 +234,6 @@ export default function CreateRequestPage() {
               <p className="text-[10pt] font-bold"><EnglishNumber>........ / ........ / 202...</EnglishNumber></p>
             </div>
           </div>
-
-          {/* تذييل المنصة الوحيد المتبقي */}
           <div className="absolute bottom-0 left-0 right-0 border-t border-gray-300 pt-1.5 flex justify-between items-center opacity-70">
             <p className="text-[9pt] font-bold text-[#073D35]">منصة الفعاليات المدنية السورية</p>
             <p className="text-[8pt] font-bold text-gray-600">تم تجهيز هذا المستند إلكترونياً لتسهيل الإجراءات التنظيمية</p>
@@ -357,259 +247,112 @@ export default function CreateRequestPage() {
     <div className="min-h-screen bg-[#F9FAFB] py-12 arabic-premium-text" dir="rtl">
       <div className="container mx-auto max-w-4xl px-4">
         <div className="mb-10 flex flex-col items-center text-center">
-          <Link
-            href="/"
-            className="mb-6 flex items-center gap-2 text-sm font-bold text-gray-500 transition-colors hover:text-[#C8A75A]"
-          >
-            <ArrowRight className="h-4 w-4" />
-            العودة للرئيسية
+          <Link href="/" className="mb-6 flex items-center gap-2 text-sm font-bold text-gray-500 transition-colors hover:text-[#C8A75A]">
+            <ArrowRight className="h-4 w-4" /> العودة للرئيسية
           </Link>
-
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#073D35]/10 px-4 py-2 text-sm font-bold text-[#073D35]">
-            <FileText className="h-4 w-4" />
-            نموذج إلكتروني
+            <FileText className="h-4 w-4" /> نموذج إلكتروني
           </div>
-
-          <h1 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">
-            إنشاء طلب ترخيص فعالية
-          </h1>
-
-          <p className="max-w-xl text-gray-500 font-medium">
-            يرجى تعبئة البيانات التالية بدقة. سيقوم النظام بتنسيقها في مستند
-            PDF رسمي جاهز للطباعة والتقديم المباشر للجهات المعنية.
-          </p>
+          <h1 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">إنشاء طلب ترخيص فعالية</h1>
+          <p className="max-w-xl text-gray-500 font-medium">يرجى تعبئة البيانات التالية بدقة. سيقوم النظام بتنسيقها في مستند PDF رسمي جاهز للطباعة والتقديم المباشر للجهات المعنية.</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:p-10">
             <h2 className="mb-6 flex items-center gap-3 border-b border-gray-100 pb-4 text-xl font-bold text-[#073D35]">
-              <User className="h-6 w-6 text-[#C8A75A]" />
-              أولاً: بيانات مقدم الطلب
+              <User className="h-6 w-6 text-[#C8A75A]" /> أولاً: بيانات مقدم الطلب
             </h2>
-
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  الاسم الكامل *
-                </label>
-                <input
-                  type="text"
-                  {...register("fullName")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                  placeholder="الاسم الثلاثي"
-                />
+                <label className="mb-2 block text-sm font-bold text-gray-700">الاسم الكامل *</label>
+                <input type="text" {...register("fullName")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="الاسم الثلاثي" />
                 <InputError error={errors.fullName?.message} />
               </div>
-
               <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  البريد الإلكتروني *
-                </label>
-                <input
-                  type="email"
-                  {...register("email")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                  placeholder="example@domain.com"
-                  dir="ltr"
-                />
+                <label className="mb-2 block text-sm font-bold text-gray-700">البريد الإلكتروني *</label>
+                <input type="email" {...register("email")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="example@domain.com" dir="ltr" />
                 <InputError error={errors.email?.message} />
               </div>
-
               <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  رقم الهاتف *
-                </label>
-                <input
-                  type="tel"
-                  {...register("phone")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                  placeholder="09xxxxxx"
-                  dir="ltr"
-                />
+                <label className="mb-2 block text-sm font-bold text-gray-700">رقم الهاتف *</label>
+                <input type="tel" {...register("phone")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="09xxxxxx" dir="ltr" />
                 <InputError error={errors.phone?.message} />
               </div>
-
               <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  الصفة في التنظيم *
-                </label>
-                <input
-                  type="text"
-                  {...register("submitterRole")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                  placeholder="مثال: رئيس اللجنة، منسق..."
-                />
+                <label className="mb-2 block text-sm font-bold text-gray-700">الصفة في التنظيم *</label>
+                <input type="text" {...register("submitterRole")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="مثال: رئيس اللجنة، منسق..." />
                 <InputError error={errors.submitterRole?.message} />
               </div>
-
               <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  اسم الجهة المنظمة اختياري
-                </label>
-                <input
-                  type="text"
-                  {...register("organizationName")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                  placeholder="إن وجدت جهة راعية أو منظمة"
-                />
+                <label className="mb-2 block text-sm font-bold text-gray-700">اسم الجهة المنظمة اختياري</label>
+                <input type="text" {...register("organizationName")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="إن وجدت جهة راعية أو منظمة" />
               </div>
             </div>
           </section>
 
           <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:p-10">
             <h2 className="mb-6 flex items-center gap-3 border-b border-gray-100 pb-4 text-xl font-bold text-[#073D35]">
-              <CalendarDays className="h-6 w-6 text-[#C8A75A]" />
-              ثانياً: بيانات الفعالية المخطط لها
+              <CalendarDays className="h-6 w-6 text-[#C8A75A]" /> ثانياً: بيانات الفعالية المخطط لها
             </h2>
-
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  عنوان الفعالية *
-                </label>
-                <input
-                  type="text"
-                  {...register("eventTitle")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                  placeholder="العنوان الرسمي الذي سيظهر في المستند"
-                />
+                <label className="mb-2 block text-sm font-bold text-gray-700">عنوان الفعالية *</label>
+                <input type="text" {...register("eventTitle")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="العنوان الرسمي الذي سيظهر في المستند" />
                 <InputError error={errors.eventTitle?.message} />
               </div>
-
               <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  نوع الفعالية *
-                </label>
-                <select
-                  {...register("eventType")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                >
+                <label className="mb-2 block text-sm font-bold text-gray-700">نوع الفعالية *</label>
+                <select {...register("eventType")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium">
                   <option value="">اختر النوع...</option>
-                  {EVENT_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
+                  {EVENT_TYPES.map((type) => (<option key={type} value={type}>{type}</option>))}
                 </select>
                 <InputError error={errors.eventType?.message} />
               </div>
-
               <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  المحافظة *
-                </label>
-                <select
-                  {...register("governorate")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                >
+                <label className="mb-2 block text-sm font-bold text-gray-700">المحافظة *</label>
+                <select {...register("governorate")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium">
                   <option value="">اختر المحافظة...</option>
-                  {GOVERNORATES.map((gov) => (
-                    <option key={gov} value={gov}>
-                      {gov}
-                    </option>
-                  ))}
+                  {GOVERNORATES.map((gov) => (<option key={gov} value={gov}>{gov}</option>))}
                 </select>
                 <InputError error={errors.governorate?.message} />
               </div>
-
               <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  المدينة / المنطقة *
-                </label>
-                <input
-                  type="text"
-                  {...register("city")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                  placeholder="الناحية أو المدينة"
-                />
+                <label className="mb-2 block text-sm font-bold text-gray-700">المدينة / المنطقة *</label>
+                <input type="text" {...register("city")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="الناحية أو المدينة" />
                 <InputError error={errors.city?.message} />
               </div>
-
               <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  مكان التجمع الدقيق *
-                </label>
-                <input
-                  type="text"
-                  {...register("location")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                  placeholder="الساحة، الحديقة، المركز..."
-                />
+                <label className="mb-2 block text-sm font-bold text-gray-700">مكان التجمع الدقيق *</label>
+                <input type="text" {...register("location")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="الساحة، الحديقة، المركز..." />
                 <InputError error={errors.location?.message} />
               </div>
-
               <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  تاريخ الفعالية *
-                </label>
-                <input
-                  type="date"
-                  {...register("eventDate")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                />
+                <label className="mb-2 block text-sm font-bold text-gray-700">تاريخ الفعالية *</label>
+                <input type="date" {...register("eventDate")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" />
                 <InputError error={errors.eventDate?.message} />
               </div>
-
               <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  العدد المتوقع للحضور *
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  {...register("expectedAttendees", { valueAsNumber: true })}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                  placeholder="رقم تقريبي"
-                />
+                <label className="mb-2 block text-sm font-bold text-gray-700">العدد المتوقع للحضور *</label>
+                <input type="number" min={1} {...register("expectedAttendees", { valueAsNumber: true })} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="رقم تقريبي" />
                 <InputError error={errors.expectedAttendees?.message} />
               </div>
-
               <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  وقت البداية *
-                </label>
-                <input
-                  type="time"
-                  {...register("startTime")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                />
+                <label className="mb-2 block text-sm font-bold text-gray-700">وقت البداية *</label>
+                <input type="time" {...register("startTime")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" />
                 <InputError error={errors.startTime?.message} />
               </div>
-
               <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  وقت النهاية *
-                </label>
-                <input
-                  type="time"
-                  {...register("endTime")}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                />
+                <label className="mb-2 block text-sm font-bold text-gray-700">وقت النهاية *</label>
+                <input type="time" {...register("endTime")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" />
                 <InputError error={errors.endTime?.message} />
               </div>
-
               <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  خط السير اختياري
-                </label>
-                <textarea
-                  {...register("route")}
-                  rows={2}
-                  className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                  placeholder="اكتب خط السير إن وجد..."
-                />
+                <label className="mb-2 block text-sm font-bold text-gray-700">خط السير اختياري</label>
+                <textarea {...register("route")} rows={2} className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="اكتب خط السير إن وجد..." />
               </div>
-
               <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-bold text-gray-700">
-                  هدف الفعالية *
-                </label>
-                <textarea
-                  {...register("eventGoal")}
-                  rows={3}
-                  className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium"
-                  placeholder="اشرح الهدف بشكل رسمي وواضح لتقديمه في الطلب..."
-                />
+                <label className="mb-2 block text-sm font-bold text-gray-700">هدف الفعالية *</label>
+                <textarea {...register("eventGoal")} rows={3} className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="اشرح الهدف بشكل رسمي وواضح لتقديمه في الطلب..." />
                 <InputError error={errors.eventGoal?.message} />
               </div>
             </div>
@@ -617,95 +360,45 @@ export default function CreateRequestPage() {
 
           <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:p-10">
             <h2 className="mb-6 flex items-center gap-3 border-b border-gray-100 pb-4 text-xl font-bold text-[#073D35]">
-              <Users className="h-6 w-6 text-[#C8A75A]" />
-              ثالثاً: تشكيل اللجنة المنظمة
+              <Users className="h-6 w-6 text-[#C8A75A]" /> ثالثاً: تشكيل اللجنة المنظمة
             </h2>
-
             <div className="space-y-6">
               <div className="rounded-2xl border border-gray-200 bg-[#F9FAFB] p-5">
                 <h3 className="mb-4 font-bold text-gray-900">رئيس اللجنة</h3>
-
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <input
-                      type="text"
-                      {...register("committeeHeadName")}
-                      placeholder="الاسم الثلاثي *"
-                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium"
-                    />
+                    <input type="text" {...register("committeeHeadName")} placeholder="الاسم الثلاثي *" className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium" />
                     <InputError error={errors.committeeHeadName?.message} />
                   </div>
-
                   <div>
-                    <input
-                      type="tel"
-                      {...register("committeeHeadPhone")}
-                      placeholder="رقم الهاتف *"
-                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium"
-                      dir="ltr"
-                    />
+                    <input type="tel" {...register("committeeHeadPhone")} placeholder="رقم الهاتف *" className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium" dir="ltr" />
                     <InputError error={errors.committeeHeadPhone?.message} />
                   </div>
-
                   <div className="md:col-span-2">
-                    <input
-                      type="email"
-                      {...register("committeeHeadEmail")}
-                      placeholder="البريد الإلكتروني *"
-                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium"
-                      dir="ltr"
-                    />
+                    <input type="email" {...register("committeeHeadEmail")} placeholder="البريد الإلكتروني *" className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium" dir="ltr" />
                     <InputError error={errors.committeeHeadEmail?.message} />
                   </div>
                 </div>
               </div>
-
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="rounded-2xl border border-gray-200 bg-[#F9FAFB] p-5">
                   <h3 className="mb-4 font-bold text-gray-900">العضو الأول</h3>
-
                   <div className="space-y-4">
                     <div>
-                      <input
-                        type="text"
-                        {...register("member1Name")}
-                        placeholder="الاسم الثلاثي *"
-                        className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium"
-                      />
+                      <input type="text" {...register("member1Name")} placeholder="الاسم الثلاثي *" className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium" />
                       <InputError error={errors.member1Name?.message} />
                     </div>
-
-                    <input
-                      type="tel"
-                      {...register("member1Phone")}
-                      placeholder="رقم الهاتف اختياري"
-                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium"
-                      dir="ltr"
-                    />
+                    <input type="tel" {...register("member1Phone")} placeholder="رقم الهاتف اختياري" className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium" dir="ltr" />
                   </div>
                 </div>
-
                 <div className="rounded-2xl border border-gray-200 bg-[#F9FAFB] p-5">
                   <h3 className="mb-4 font-bold text-gray-900">العضو الثاني</h3>
-
                   <div className="space-y-4">
                     <div>
-                      <input
-                        type="text"
-                        {...register("member2Name")}
-                        placeholder="الاسم الثلاثي *"
-                        className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium"
-                      />
+                      <input type="text" {...register("member2Name")} placeholder="الاسم الثلاثي *" className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium" />
                       <InputError error={errors.member2Name?.message} />
                     </div>
-
-                    <input
-                      type="tel"
-                      {...register("member2Phone")}
-                      placeholder="رقم الهاتف اختياري"
-                      className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium"
-                      dir="ltr"
-                    />
+                    <input type="tel" {...register("member2Phone")} placeholder="رقم الهاتف اختياري" className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 outline-none focus:border-[#C8A75A] font-medium" dir="ltr" />
                   </div>
                 </div>
               </div>
@@ -714,26 +407,14 @@ export default function CreateRequestPage() {
 
           <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:p-10">
             <h2 className="mb-6 flex items-center gap-3 border-b border-gray-100 pb-4 text-xl font-bold text-[#073D35]">
-              <CheckSquare className="h-6 w-6 text-[#C8A75A]" />
-              رابعاً: التعهدات والإقرارات
+              <CheckSquare className="h-6 w-6 text-[#C8A75A]" /> رابعاً: التعهدات والإقرارات
             </h2>
-
             <div className="space-y-4">
               {pledges.map((pledge) => (
-                <label
-                  key={pledge.name}
-                  className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:bg-gray-100"
-                >
-                  <input
-                    type="checkbox"
-                    {...register(pledge.name)}
-                    className="mt-1 h-5 w-5 rounded border-gray-300 text-[#073D35] focus:ring-[#073D35]"
-                  />
-
+                <label key={pledge.name} className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:bg-gray-100">
+                  <input type="checkbox" {...register(pledge.name)} className="mt-1 h-5 w-5 rounded border-gray-300 text-[#073D35] focus:ring-[#073D35]" />
                   <div>
-                    <span className="block font-bold text-gray-700">
-                      {pledge.text}
-                    </span>
+                    <span className="block font-bold text-gray-700">{pledge.text}</span>
                     <InputError error={errors[pledge.name]?.message} />
                   </div>
                 </label>
@@ -742,18 +423,11 @@ export default function CreateRequestPage() {
           </section>
 
           <div className="flex flex-col items-center pt-4">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[#073D35] px-12 py-5 text-lg font-bold text-white shadow-xl shadow-[#073D35]/20 transition-all hover:bg-[#052e28] disabled:cursor-not-allowed disabled:bg-[#073D35]/50 md:w-auto"
-            >
-              {isSubmitting ? "جاري تجهيز الطلب والمستند..." : "تأكيد وإنشاء الطلب"}
+            <button type="submit" disabled={isSubmitting} className="flex w-full items-center justify-center gap-3 rounded-2xl bg-[#073D35] px-12 py-5 text-lg font-bold text-white shadow-xl shadow-[#073D35]/20 transition-all hover:bg-[#052e28] disabled:cursor-not-allowed disabled:bg-[#073D35]/50 md:w-auto">
+              {isSubmitting ? "جاري تجهيز وإرسال الطلب..." : "تأكيد وإنشاء الطلب"}
               {!isSubmitting && <ArrowRight className="h-5 w-5 rotate-180" />}
             </button>
-
-            <p className="mt-4 text-sm font-medium text-gray-400">
-              بالضغط على تأكيد، سيتم توليد مستند PDF جاهز للطباعة.
-            </p>
+            <p className="mt-4 text-sm font-medium text-gray-400">بالضغط على تأكيد، سيتم إنشاء كود مرجعي خاص بك لتتمكن من تتبع طلبك.</p>
           </div>
         </form>
       </div>

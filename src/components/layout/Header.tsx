@@ -20,9 +20,10 @@ export function Header() {
   }, []);
 
   const navLinks = [
-    { name: "الرئيسية", href: "/" },
-    { name: "الفعاليات", href: "/events" },
-  ];
+  { name: "الرئيسية", href: "/" },
+  { name: "الفعاليات", href: "/events" },
+  { name: "تتبع الطلب", href: "/track" }, // الرابط الجديد
+];
 
   return (
     <header
