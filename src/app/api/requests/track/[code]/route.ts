@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function GET(req: Request, { params }: { params: Promise<{ code: string }> }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ code: string }> }
+) {
   try {
-    // التعديل هنا: يجب عمل await للـ params
     const resolvedParams = await params;
     const code = resolvedParams.code.toUpperCase();
-    
     const supabase = createAdminClient();
 
     const { data, error } = await supabase
