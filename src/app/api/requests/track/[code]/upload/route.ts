@@ -2,11 +2,14 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import nodemailer from "nodemailer";
 
-export async function POST(req: Request, { params }: { params: { code: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ code: string }> }) {
   try {
+    // التعديل هنا: يجب عمل await للـ params
+    const resolvedParams = await params;
+    const code = resolvedParams.code.toUpperCase();
+    
     const formData = await req.formData();
     const files = formData.getAll("files") as File[];
-    const code = params.code.toUpperCase();
     const supabase = createAdminClient();
 
     if (!files || files.length === 0 || files.length > 3) {
