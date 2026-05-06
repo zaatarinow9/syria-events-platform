@@ -214,11 +214,8 @@ export default function CreateRequestPage() {
           {/* الترويسة الرسمية (بدون اسم منصة وبدون تاريخ وبدون رقم) */}
           <div className="mb-4 text-center border-b-[2px] border-black pb-2 pt-2">
             <h1 className="text-[14pt] font-bold underline decoration-2 underline-offset-4 mb-1">
-              طلب ترخيص تجمع / فعالية مدنية
+              طلب ترخيص تجمع
             </h1>
-            <p className="text-[10pt] font-bold text-gray-800">
-              نموذج تصريح رسمي مخصص للتقديم للجهات الإدارية المختصة
-            </p>
           </div>
 
           {/* المقدمة والمعروض */}
@@ -237,7 +234,7 @@ export default function CreateRequestPage() {
           {/* الجدول الأول: تفاصيل الفعالية */}
           <div className="mb-4 overflow-hidden rounded-lg border border-gray-400">
             <div className="border-b border-gray-400 bg-gray-100 px-3 py-1.5 text-[10pt] font-bold">
-              أولاً: بيانات وتفاصيل الفعالية
+             بيانات وتفاصيل الفعالية
             </div>
             <table className="w-full text-[9.5pt] border-collapse">
               <tbody>
@@ -282,7 +279,7 @@ export default function CreateRequestPage() {
           {/* الجدول الثاني: بيانات اللجنة */}
           <div className="mb-4 overflow-hidden rounded-lg border border-gray-400">
             <div className="border-b border-gray-400 bg-gray-100 px-3 py-1.5 text-[10pt] font-bold">
-              ثانياً: بيانات اللجنة المنظمة (مُقدّمي الطلب)
+               بيانات اللجنة المنظمة (مُقدّمي الطلب)
             </div>
             <table className="w-full text-[9.5pt] text-center border-collapse">
               <thead>
