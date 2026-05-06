@@ -49,25 +49,45 @@ export async function POST(req: Request) {
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       const transporter = nodemailer.createTransport({
         service: "gmail",
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
+        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
       });
 
+      // 1. إشعار للإدارة
       await transporter.sendMail({
-        from: process.env.EMAIL_USER,
+        from: `"نظام وينكم" <${process.env.EMAIL_USER}>`,
         to: "a7mad.y.alkilani@gmail.com",
-        subject: `طلب فعالية جديد: ${data.eventTitle} (${request_number})`,
+        subject: `طلب جديد: ${data.eventTitle} (${request_number})`,
+        html: `<div dir="rtl"><h2>وصل طلب جديد للمراجعة</h2><p>الفعالية: ${data.eventTitle}</p></div>`,
+      });
+
+      // 2. إشعار للمستخدم (احترافي)
+      await transporter.sendMail({
+        from: `"منصة وينكم" <${process.env.EMAIL_USER}>`,
+        to: data.email,
+        subject: `تأكيد استلام طلبك - كود التتبع: ${request_number}`,
         html: `
-          <div dir="rtl" style="font-family: Arial, sans-serif;">
-            <h2>تم تقديم طلب فعالية جديد عبر المنصة</h2>
-            <p><strong>رقم الطلب:</strong> ${request_number}</p>
-            <p><strong>اسم الفعالية:</strong> ${data.eventTitle}</p>
-            <p><strong>المحافظة:</strong> ${data.governorate}</p>
-            <p><strong>مقدم الطلب:</strong> ${data.fullName}</p>
-            <br/>
-            <p>يرجى الدخول للوحة الإدارة لمراجعة الطلب.</p>
+          <div dir="rtl" style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="background: #073D35; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+              <h1 style="color: #C8A75A; margin: 0;">منصة وينكم للفعاليات</h1>
+            </div>
+            <div style="padding: 30px; border: 1px solid #eee; border-top: none; border-radius: 0 0 10px 10px;">
+              <h2 style="color: #073D35;">أهلاً بك يا ${data.fullName}،</h2>
+              <p>لقد تم استلام طلبك لتنظيم فعالية <strong>"${data.eventTitle}"</strong> بنجاح.</p>
+              <div style="background: #fdfbf7; border: 1px solid #C8A75A; padding: 20px; text-align: center; border-radius: 10px; margin: 20px 0;">
+                <p style="margin: 0; color: #555;">كود التتبع المرجعي الخاص بك:</p>
+                <h2 style="margin: 10px 0; font-family: monospace; letter-spacing: 5px; color: #073D35;">${request_number}</h2>
+              </div>
+              <h3>تفاصيل الطلب:</h3>
+              <ul style="list-style: none; padding: 0;">
+                <li>📍 <strong>الموقع:</strong> ${data.governorate} - ${data.city}</li>
+                <li>📅 <strong>التاريخ:</strong> ${data.eventDate}</li>
+                <li>⏰ <strong>الوقت:</strong> من ${data.startTime} إلى ${data.endTime}</li>
+              </ul>
+              <p>يمكنك الآن استخدام هذا الكود لتتبع حالة الطلب ورفع وثائق الموافقة الرسمية عبر الرابط أدناه:</p>
+              <div style="text-align: center; margin-top: 30px;">
+                <a href="${process.env.NEXT_PUBLIC_SITE_URL}/track" style="background: #073D35; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-bold: true;">تتبع الطلب الآن</a>
+              </div>
+            </div>
           </div>
         `,
       });
