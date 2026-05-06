@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import StatusBadge from "@/components/admin/StatusBadge";
+import RequestActions from "@/components/admin/RequestActions"; // <-- هذا هو السطر الذي كان ناقصاً
 import { 
   ArrowRight, 
   User, 
