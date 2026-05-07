@@ -33,7 +33,7 @@ export default function TrackDetailsPage() {
   }, [code]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
+    if (e.target.files && e.target.files.length > 0) {
       const selectedFiles = Array.from(e.target.files).slice(0, 3);
       setFiles(selectedFiles);
     }
@@ -48,23 +48,24 @@ export default function TrackDetailsPage() {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
 
-    // استخدام XMLHttpRequest للحصول على نسبة الرفع الدقيقة
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", `/api/requests/track/${code}/upload`, true);
-
-    xhr.upload.onprogress = (event) => {
+    
+    // تتبع نسبة الرفع المباشرة
+    xhr.upload.addEventListener("progress", (event) => {
       if (event.lengthComputable) {
         const percentComplete = Math.round((event.loaded / event.total) * 100);
         setUploadProgress(percentComplete);
       }
-    };
+    });
 
-    xhr.onload = () => {
+    // عند الانتهاء بنجاح
+    xhr.addEventListener("load", () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           const result = JSON.parse(xhr.responseText);
           if (result.success) {
             setUploadSuccess(true);
+            setUploadProgress(100);
           } else {
             alert(result.error || "فشل الرفع");
           }
@@ -75,18 +76,24 @@ export default function TrackDetailsPage() {
         alert("حدث خطأ أثناء الرفع");
       }
       setUploading(false);
-    };
+    });
 
-    xhr.onerror = () => {
-      alert("خطأ في الاتصال بالخادم");
+    // عند حدوث خطأ
+    xhr.addEventListener("error", () => {
+      alert("خطأ في الاتصال بالخادم. يرجى المحاولة مرة أخرى.");
       setUploading(false);
-    };
+      setUploadProgress(0);
+    });
 
+    xhr.open("POST", `/api/requests/track/${code}/upload`, true);
     xhr.send(formData);
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]"><Loader2 className="w-10 h-10 animate-spin text-[#073D35]" /></div>;
   if (error) return <div className="min-h-screen flex items-center justify-center text-red-600 font-bold bg-[#F9FAFB]" dir="rtl">{error}</div>;
+
+  // التحقق من تفعيل زر الرفع (يجب أن يكون هناك ملفات، ولا يجب أن يكون قيد الرفع)
+  const isUploadDisabled = files.length === 0 || uploading;
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] py-12 px-4 arabic-premium-text" dir="rtl">
@@ -182,22 +189,31 @@ export default function TrackDetailsPage() {
 
                     {/* شريط التحميل يظهر عند بدء الرفع */}
                     {uploading && (
-                      <div className="w-full bg-gray-100 rounded-full h-3 mb-2 overflow-hidden border border-gray-200">
-                        <div 
-                          className="bg-[#073D35] h-3 rounded-full transition-all duration-300 ease-out" 
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
-                        <p className="text-xs font-bold text-center mt-2 text-[#073D35]">{uploadProgress}%</p>
+                      <div className="w-full mt-4">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs font-bold text-[#073D35]">جاري الرفع...</span>
+                          <span className="text-xs font-bold text-[#073D35]">{uploadProgress}%</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200">
+                          <div 
+                            className="bg-[#073D35] h-2.5 rounded-full transition-all duration-300 ease-out" 
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
                       </div>
                     )}
 
                     <button 
                       onClick={handleUpload} 
-                      disabled={uploading} 
-                      className="w-full bg-[#073D35] hover:bg-[#052e28] text-white font-bold py-4 rounded-xl transition-all shadow-md shadow-[#073D35]/20 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                      disabled={isUploadDisabled} 
+                      className={`w-full font-bold py-4 rounded-xl transition-all shadow-md flex justify-center items-center gap-2 mt-4 
+                        ${isUploadDisabled 
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none' 
+                          : 'bg-[#073D35] hover:bg-[#052e28] text-white shadow-[#073D35]/20'
+                        }`}
                     >
                       {uploading ? (
-                        <>جاري رفع الملفات... <Loader2 className="w-5 h-5 animate-spin" /></>
+                        <>جاري الرفع... <Loader2 className="w-5 h-5 animate-spin" /></>
                       ) : (
                         "تأكيد وإرسال صورة الموافقة"
                       )}
