@@ -10,9 +10,10 @@ export async function GET(
     const code = resolvedParams.code.toUpperCase();
     const supabase = createAdminClient();
 
+    // تم تعديل الاستعلام لجلب كافة البيانات (*)
     const { data, error } = await supabase
       .from("permit_requests")
-      .select("request_number, event_title, governorate, status, created_at")
+      .select("*")
       .eq("request_number", code)
       .single();
 
