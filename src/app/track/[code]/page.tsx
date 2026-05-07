@@ -2,8 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { UploadCloud, FileImage, Loader2, CheckCircle2, ArrowRight, User, Calendar, MapPin, Clock, FileCheck, ShieldAlert } from "lucide-react";
+import { UploadCloud, FileImage, Loader2, CheckCircle2, ArrowRight, User, Calendar, MapPin, Clock, FileCheck, ShieldAlert, XCircle } from "lucide-react";
 import Link from "next/link";
+
+// دالة لتحديد شكل ولون وتسمية الحالة للمستخدم
+const getStatusInfo = (status: string) => {
+  switch (status) {
+    case 'published': return { label: 'منشور وموافق عليه', color: 'bg-green-50 text-green-700 border-green-200' };
+    case 'rejected': return { label: 'مرفوض', color: 'bg-red-50 text-red-700 border-red-200' };
+    case 'under_review': return { label: 'الوثائق قيد المراجعة', color: 'bg-purple-50 text-purple-700 border-purple-200' };
+    case 'waiting_approval_document': return { label: 'بانتظار رفع الموافقة', color: 'bg-blue-50 text-blue-700 border-blue-200' };
+    default: return { label: 'قيد الانتظار', color: 'bg-yellow-50 text-yellow-700 border-yellow-200' };
+  }
+};
 
 export default function TrackDetailsPage() {
   const params = useParams();
@@ -66,6 +77,8 @@ export default function TrackDetailsPage() {
           if (result.success) {
             setUploadSuccess(true);
             setUploadProgress(100);
+            // تحديث الحالة محلياً لتغيير الواجهة فوراً
+            setData((prev: any) => ({ ...prev, status: 'under_review' })); 
           } else {
             alert(result.error || "فشل الرفع");
           }
@@ -92,8 +105,8 @@ export default function TrackDetailsPage() {
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]"><Loader2 className="w-10 h-10 animate-spin text-[#073D35]" /></div>;
   if (error) return <div className="min-h-screen flex items-center justify-center text-red-600 font-bold bg-[#F9FAFB]" dir="rtl">{error}</div>;
 
-  // التحقق من تفعيل زر الرفع (يجب أن يكون هناك ملفات، ولا يجب أن يكون قيد الرفع)
   const isUploadDisabled = files.length === 0 || uploading;
+  const statusInfo = getStatusInfo(data?.status);
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] py-12 px-4 arabic-premium-text" dir="rtl">
@@ -105,11 +118,16 @@ export default function TrackDetailsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
           {/* القسم الأيمن: معلومات الطلب الأساسية */}
-          <div className="bg-white rounded-3xl shadow-sm p-8 border border-gray-100">
+          <div className="bg-white rounded-3xl shadow-sm p-8 border border-gray-100 h-fit">
             <div className="mb-6 border-b border-gray-100 pb-6">
-              <span className="inline-block bg-[#FDFBF7] border border-[#C8A75A]/30 text-[#C8A75A] px-4 py-1.5 rounded-lg font-mono text-lg font-bold uppercase mb-3">
-                {data?.request_number}
-              </span>
+              <div className="flex items-center justify-between mb-4">
+                <span className="inline-block bg-[#FDFBF7] border border-[#C8A75A]/30 text-[#C8A75A] px-4 py-1.5 rounded-lg font-mono text-lg font-bold uppercase">
+                  {data?.request_number}
+                </span>
+                <span className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${statusInfo.color}`}>
+                  {statusInfo.label}
+                </span>
+              </div>
               <h1 className="text-2xl font-bold text-gray-900 leading-tight">{data?.event_title}</h1>
             </div>
             
@@ -153,24 +171,55 @@ export default function TrackDetailsPage() {
             </div>
           </div>
 
-          {/* القسم الأيسر: رفع الموافقة */}
-          <div className="bg-white rounded-3xl shadow-sm p-8 border border-gray-100 flex flex-col justify-center">
+          {/* القسم الأيسر: الإجراءات الديناميكية (رفع موافقة أو عرض حالة) */}
+          <div className="bg-white rounded-3xl shadow-sm p-8 border border-gray-100 flex flex-col justify-center min-h-[400px]">
             
-            <div className="mb-6 p-4 bg-[#C8A75A]/10 border border-[#C8A75A]/20 rounded-2xl flex items-start gap-3">
-              <ShieldAlert className="w-6 h-6 text-[#C8A75A] shrink-0 mt-0.5" />
-              <p className="text-sm font-bold text-gray-800 leading-relaxed">
-                باقي رفع الموافقة الصادرة عن المحافظة أو المركز الأمني ليتم نشر فعاليتك بشكل رسمي على منصة وينكم.
-              </p>
-            </div>
-
-            {uploadSuccess ? (
-              <div className="bg-green-50 border border-green-200 text-green-700 p-8 rounded-2xl text-center">
-                <CheckCircle2 className="w-14 h-14 mb-4 text-green-500 mx-auto" />
-                <h4 className="font-bold text-xl mb-2">تم استلام الموافقة بنجاح!</h4>
-                <p className="text-sm font-medium">سيتم مراجعة الوثيقة من قبل الإدارة ونشر الفعالية قريباً.</p>
+            {data?.status === 'published' ? (
+              // حالة: تم النشر
+              <div className="text-center py-6">
+                <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto mb-6 drop-shadow-sm" />
+                <h4 className="font-bold text-2xl text-gray-900 mb-3">تمت الموافقة والنشر!</h4>
+                <p className="text-gray-500 font-medium leading-relaxed max-w-sm mx-auto mb-8">
+                  تهانينا، تمت مراجعة الوثائق والموافقة على طلبك من قبل الإدارة. الفعالية الآن متاحة للعامة على المنصة.
+                </p>
+                <Link 
+                  href={`/events/${data.id}`} 
+                  className="inline-flex justify-center items-center gap-2 w-full bg-[#073D35] hover:bg-[#052e28] text-white font-bold py-4 rounded-xl transition-all shadow-xl shadow-[#073D35]/20 hover:-translate-y-1"
+                >
+                  الذهاب لصفحة الفعالية <ArrowRight className="w-5 h-5 rotate-180" />
+                </Link>
               </div>
+
+            ) : data?.status === 'rejected' ? (
+              // حالة: مرفوض
+              <div className="text-center py-6">
+                <XCircle className="w-20 h-20 text-red-500 mx-auto mb-6 drop-shadow-sm" />
+                <h4 className="font-bold text-2xl text-gray-900 mb-3">نعتذر، تم رفض الطلب</h4>
+                <p className="text-gray-500 font-medium leading-relaxed max-w-sm mx-auto">
+                  لم يتم الموافقة على طلبك من قبل الإدارة. قد يكون ذلك بسبب نقص في البيانات أو عدم مطابقة الشروط. يمكنك التواصل معنا للاستفسار.
+                </p>
+              </div>
+
+            ) : data?.status === 'under_review' || uploadSuccess ? (
+              // حالة: قيد المراجعة (بعد رفع الوثائق)
+              <div className="bg-purple-50 border border-purple-100 text-purple-800 p-8 rounded-2xl text-center">
+                <Clock className="w-16 h-16 mb-4 text-purple-500 mx-auto animate-pulse" />
+                <h4 className="font-bold text-xl mb-3">وثائقك قيد المراجعة</h4>
+                <p className="text-sm font-medium leading-relaxed">
+                  تم استلام صور الموافقة بنجاح. الإدارة تقوم بمراجعتها الآن وسيتم إشعارك فور الموافقة ونشر الفعالية.
+                </p>
+              </div>
+
             ) : (
+              // حالة: بانتظار رفع الوثائق (الافتراضي)
               <div className="space-y-5">
+                <div className="mb-6 p-4 bg-[#C8A75A]/10 border border-[#C8A75A]/20 rounded-2xl flex items-start gap-3">
+                  <ShieldAlert className="w-6 h-6 text-[#C8A75A] shrink-0 mt-0.5" />
+                  <p className="text-sm font-bold text-gray-800 leading-relaxed">
+                    باقي رفع الموافقة الصادرة عن المحافظة أو المركز الأمني ليتم نشر فعاليتك بشكل رسمي على منصة وينكم.
+                  </p>
+                </div>
+
                 <label className={`flex flex-col items-center justify-center w-full h-44 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${files.length > 0 ? 'border-[#073D35] bg-[#073D35]/5' : 'border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-[#C8A75A]'}`}>
                   <UploadCloud className={`w-12 h-12 mb-3 ${files.length > 0 ? 'text-[#073D35]' : 'text-gray-400'}`} />
                   <span className="text-sm font-bold text-gray-700">اضغط لاختيار صورة الموافقة</span>
@@ -187,7 +236,7 @@ export default function TrackDetailsPage() {
                       </div>
                     ))}
 
-                    {/* شريط التحميل يظهر عند بدء الرفع */}
+                    {/* شريط التحميل */}
                     {uploading && (
                       <div className="w-full mt-4">
                         <div className="flex justify-between items-center mb-1">
@@ -222,6 +271,7 @@ export default function TrackDetailsPage() {
                 )}
               </div>
             )}
+
           </div>
         </div>
       </div>
