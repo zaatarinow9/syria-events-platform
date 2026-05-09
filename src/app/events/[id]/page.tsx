@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { 
   ArrowRight, 
   MapPin, 
@@ -16,65 +17,84 @@ import {
   Share2,
   Link as LinkIcon,
   CheckCircle2,
-  Navigation
+  Navigation,
+  Loader2
 } from "lucide-react";
 
-const MOCK_EVENTS_DB = {
-  "1": {
-    id: "1",
-    title: "حملة تشجير وتجميل المرافق العامة",
-    type: "حملة تطوعية",
-    status: "مقبول للنشر",
-    governorate: "دمشق",
-    city: "الربوة",
-    location: "حديقة تشرين - المدخل الجنوبي",
-    date: "15 أيار 2026",
-    startTime: "09:00 صباحاً",
-    endTime: "02:00 ظهراً",
-    expectedAttendees: "150",
-    goal: "تهدف هذه الحملة إلى زيادة المساحات الخضراء في الحديقة وتوعية المجتمع بأهمية الحفاظ على البيئة والمرافق العامة، بمشاركة شبابية واسعة لتنظيف وتشجير الممرات الرئيسية.",
-    route: "التجمع عند الباب الجنوبي، ثم الانطلاق نحو الساحة الرئيسية وتوزع الفرق.",
-    organizationName: "مبادرة دمشق الخضراء",
-    submitterRole: "منسق الحملة",
-    coordinates: [33.5138, 36.2765] as [number, number]
-  },
-  "2": {
-    id: "2",
-    title: "ندوة حوارية حول التنمية المستدامة",
-    type: "ندوة / لقاء",
-    status: "مقبول للنشر",
-    governorate: "حلب",
-    city: "مركز المدينة",
-    location: "المركز الثقافي العربي",
-    date: "22 أيار 2026",
-    startTime: "05:00 عصراً",
-    endTime: "08:00 مساءً",
-    expectedAttendees: "200",
-    goal: "مناقشة أهداف التنمية المستدامة وكيفية تطبيقها في إعادة إعمار البنية التحتية، مع استضافة خبراء ومختصين في المجال الاقتصادي والبيئي.",
-    route: "",
-    organizationName: "غرفة شباب حلب",
-    submitterRole: "رئيس اللجنة المنظمة",
-    coordinates: [36.2021, 37.1343] as [number, number]
-  }
+// خريطة الإحداثيات لربط المحافظات بزر خرائط جوجل
+const GOV_COORDINATES: Record<string, [number, number]> = {
+  "دمشق": [33.5138, 36.2765], "ريف دمشق": [33.5130, 36.3000], "حلب": [36.2021, 37.1343],
+  "حمص": [34.7324, 36.7137], "حماة": [35.1318, 36.7578], "اللاذقية": [35.5132, 35.7863],
+  "طرطوس": [34.8890, 35.8866], "إدلب": [35.9306, 36.6339], "الرقة": [35.9528, 39.0152],
+  "دير الزور": [35.3288, 40.1408], "الحسكة": [36.4984, 40.7486], "درعا": [32.6247, 36.1052],
+  "السويداء": [32.7090, 36.5684], "القنيطرة": [33.1256, 35.8215]
 };
 
 export default function EventDetailsPage() {
   const params = useParams();
-  const eventId = params.id as string;
-  const event = MOCK_EVENTS_DB[eventId as keyof typeof MOCK_EVENTS_DB];
-
+  const eventId = params?.id as string;
+  
+  const [event, setEvent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [currentUrl, setCurrentUrl] = useState("");
 
   useEffect(() => {
     setCurrentUrl(window.location.href);
-  }, []);
+
+    const fetchEventDetails = async () => {
+      if (!eventId) return;
+      
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('permit_requests')
+        .select('*')
+        .eq('id', eventId)
+        .single();
+
+      if (data && !error) {
+        // تهيئة البيانات لتناسب الواجهة
+        setEvent({
+          id: data.id,
+          title: data.event_title,
+          type: data.event_type,
+          status: data.status === 'published' ? 'منشور وموافق عليه' : 'قيد المراجعة',
+          governorate: data.governorate,
+          city: data.city || data.location,
+          location: data.location,
+          date: new Date(data.event_date).toLocaleDateString('ar-SY', { day: '2-digit', month: 'long', year: 'numeric' }),
+          startTime: data.start_time,
+          endTime: data.end_time,
+          expectedAttendees: data.expected_attendees,
+          goal: data.event_goal,
+          route: data.route,
+          organizationName: data.organization_name,
+          submitterRole: data.submitter_role,
+          coordinates: GOV_COORDINATES[data.governorate] || [34.8, 38.0]
+        });
+      }
+      setLoading(false);
+    };
+
+    fetchEventDetails();
+  }, [eventId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F9FAFB] flex flex-col items-center justify-center p-4">
+        <Loader2 className="w-12 h-12 animate-spin text-[#073D35]" />
+      </div>
+    );
+  }
 
   if (!event) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex flex-col items-center justify-center p-4 arabic-premium-text">
         <h1 className="text-2xl font-bold text-gray-800 mb-4">الفعالية غير موجودة</h1>
-        <Link href="/" className="text-[#C8A75A] font-bold hover:underline">العودة للرئيسية</Link>
+        <p className="text-gray-500 mb-6">قد يكون تم حذف هذه الفعالية أو أن الرابط غير صحيح.</p>
+        <Link href="/" className="bg-[#C8A75A] text-[#073D35] px-6 py-2 rounded-xl font-bold hover:bg-[#E0BE72] transition-colors">
+          العودة للرئيسية
+        </Link>
       </div>
     );
   }
@@ -82,7 +102,7 @@ export default function EventDetailsPage() {
   const shareText = `ندعوكم لحضور ${event.type}: "${event.title}" في ${event.governorate} بتاريخ ${event.date}. التفاصيل عبر الرابط:`;
   const encodedText = encodeURIComponent(shareText);
   const encodedUrl = encodeURIComponent(currentUrl);
-  const mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${event.coordinates[0]},${event.coordinates[1]}`;
+  const mapsLink = `https://www.google.com/maps/dir/?api=1&destination=$${event.coordinates[0]},${event.coordinates[1]}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(currentUrl);
@@ -95,9 +115,9 @@ export default function EventDetailsPage() {
       <div className="container mx-auto px-4 max-w-5xl">
         
         <div className="mb-8 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-[#C8A75A] transition-colors">
+          <Link href="/events" className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-[#C8A75A] transition-colors">
             <ArrowRight className="w-4 h-4" />
-            العودة للخريطة
+            العودة للفعاليات
           </Link>
           <div className="flex items-center gap-2 text-sm">
             <span className="text-[#2F9E6D] bg-[#2F9E6D]/10 px-3 py-1 rounded-full font-bold flex items-center gap-1.5 border border-[#2F9E6D]/20">
