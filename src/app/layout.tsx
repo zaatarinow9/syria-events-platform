@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
-import { Cairo } from "next/font/google";
+import localFont from "next/font/local";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import "./globals.css";
 
-// استدعاء خط كايرو الرسمي لضمان دعمه على كل الأجهزة
-const cairo = Cairo({
-  subsets: ["arabic"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-cairo",
+const thmanyah = localFont({
+  src: [
+    { path: "../fonts/thmanyah-regular.ttf", weight: "400", style: "normal" },
+    { path: "../fonts/thmanyah-medium.ttf", weight: "500", style: "normal" },
+    { path: "../fonts/thmanyah-semibold.ttf", weight: "600", style: "normal" },
+    { path: "../fonts/thmanyah-bold.ttf", weight: "700", style: "normal" },
+  ],
+  variable: "--font-thmanyah",
   display: "swap",
 });
 
@@ -27,8 +30,7 @@ export default function RootLayout({
       <head>
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
       </head>
-      {/* تطبيق الخط كلاسياً يمنع مشاكل الجوالات */}
-      <body className={`${cairo.className} bg-[#F9FAFB] text-[#111827] antialiased min-h-screen flex flex-col`}>
+      <body className={`${thmanyah.variable} bg-[#F9FAFB] text-[#111827] antialiased min-h-screen flex flex-col`}>
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />

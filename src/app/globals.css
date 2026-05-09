@@ -12,7 +12,6 @@ body {
   direction: rtl;
 }
 
-/* تخصيص شريط التمرير (Scrollbar) */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
@@ -28,7 +27,6 @@ body {
   background: #94a3b8; 
 }
 
-/* تنسيق احترافي للنافذة المنبثقة (Popup) في الخريطة */
 .leaflet-popup-content-wrapper {
   background: transparent !important;
   box-shadow: none !important;
@@ -55,9 +53,6 @@ body {
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1) !important;
 }
 
-
-
-/* تنسيقات الطباعة وتوليد الـ PDF من المتصفح */
 @media print {
   body * {
     visibility: hidden;
@@ -74,7 +69,6 @@ body {
     padding: 2cm;
     color: black !important;
   }
-  /* إخفاء الأزرار وأي عناصر غير ضرورية أثناء الطباعة */
   .no-print {
     display: none !important;
   }
