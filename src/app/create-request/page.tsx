@@ -1,9 +1,11 @@
+// ID: CREATE_REQUEST_GEO_INTEGRATION
 "use client";
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   ArrowRight,
   FileText,
@@ -11,10 +13,10 @@ import {
   CalendarDays,
   Users,
   CheckSquare,
-  Printer,
   Info,
   CheckCircle2,
   Download,
+  MapPin
 } from "lucide-react";
 import {
   permitRequestSchema,
@@ -23,6 +25,12 @@ import {
 } from "@/lib/validations/permitRequestSchema";
 import { GOVERNORATES } from "@/lib/constants/governorates";
 import { EVENT_TYPES } from "@/lib/constants/eventTypes";
+
+// استدعاء الخريطة بشكل ديناميكي لتجنب أخطاء السيرفر
+const LocationPicker = dynamic(() => import("@/components/shared/LocationPicker"), { 
+  ssr: false,
+  loading: () => <div className="h-[300px] w-full bg-gray-50 animate-pulse rounded-xl border border-gray-100 flex items-center justify-center">جاري تحميل الخريطة...</div>
+});
 
 const pledges: Array<{ name: PledgeFieldName; text: string }> = [
   { name: "pledgeTrueInfo", text: "أتعهد بأن كافة المعلومات المدخلة صحيحة ودقيقة." },
@@ -45,21 +53,37 @@ export default function CreateRequestPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [requestNumber, setRequestNumber] = useState("");
   const [formData, setFormData] = useState<PermitRequestFormValues | null>(null);
+  
+  // حالة لحفظ الإحداثيات من الخريطة
+  const [coordinates, setCoordinates] = useState({ lat: 34.8, lng: 38.0 });
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<PermitRequestFormValues>({
     resolver: zodResolver(permitRequestSchema),
   });
 
+  const handleLocationSelect = (lat: number, lng: number, address: string) => {
+    setCoordinates({ lat, lng });
+    // يمكننا وضع العنوان المقترح في حقل الموقع إذا كان فارغاً
+  };
+
   const onSubmit = async (data: PermitRequestFormValues) => {
     try {
+      // دمج الإحداثيات مع البيانات المرسلة
+      const payload = {
+        ...data,
+        latitude: coordinates.lat,
+        longitude: coordinates.lng
+      };
+
       const response = await fetch("/api/requests/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       
       if (!response.ok) throw new Error("فشل إرسال الطلب");
@@ -142,7 +166,7 @@ export default function CreateRequestPage() {
           </div>
           <div className="mb-4">
             <h2 className="mb-1 text-[11pt] font-bold">السيد محافظ {formData.governorate} المحترم،</h2>
-            <p className="text-[10pt] text-justify leading-[1.5] font-medium">نحن اللجنة المنظمة المذكورة تفاصيلها أدناه، نتقدم لمقامكم بطلب الموافقة على تنظيم <strong>({formData.eventType})</strong> تحت عنوان <strong>&quot;{formData.eventTitle}&quot;</strong>، وذلك وفقاً للبيانات والتعهدات المدونة في هذا المستند، راجين موافقتكم الكريمة للإيعاز لمن يلزم.</p>
+            <p className="text-[10pt] text-justify leading-[1.5] font-medium">نحن اللجنة المنظمة المذكورة تفاصيلها أدناه، نتقدم لمقامكم بطلب الموافقة على تنظيم <strong>({formData.eventType})</strong> تحت عنوان <strong>"{formData.eventTitle}"</strong>، وذلك وفقاً للبيانات والتعهدات المدونة في هذا المستند، راجين موافقتكم الكريمة للإيعاز لمن يلزم.</p>
           </div>
           <div className="mb-4 overflow-hidden rounded-lg border border-gray-400">
             <div className="border-b border-gray-400 bg-gray-100 px-3 py-1.5 text-[10pt] font-bold">أولاً: بيانات وتفاصيل الفعالية</div>
@@ -292,7 +316,7 @@ export default function CreateRequestPage() {
 
           <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:p-10">
             <h2 className="mb-6 flex items-center gap-3 border-b border-gray-100 pb-4 text-xl font-bold text-[#073D35]">
-              <CalendarDays className="h-6 w-6 text-[#C8A75A]" /> ثانياً: بيانات الفعالية المخطط لها
+              <CalendarDays className="h-6 w-6 text-[#C8A75A]" /> ثانياً: بيانات الفعالية والموقع
             </h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="md:col-span-2">
@@ -321,11 +345,22 @@ export default function CreateRequestPage() {
                 <input type="text" {...register("city")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="الناحية أو المدينة" />
                 <InputError error={errors.city?.message} />
               </div>
-              <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">مكان التجمع الدقيق *</label>
+              
+              {/* قسم الخريطة الجديد */}
+              <div className="md:col-span-2 border border-[#C8A75A]/20 bg-[#FDFBF7] p-5 rounded-2xl my-4">
+                <h3 className="text-md font-bold text-[#073D35] mb-3 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-[#C8A75A]"/> تحديد الموقع على الخريطة (لتسهيل الوصول)
+                </h3>
+                <p className="text-xs text-gray-500 mb-4 font-medium">يرجى البحث عن الموقع أو سحب الخريطة والنقر لتحديد مكان الفعالية بدقة لتسهيل وصول المشاركين إليه.</p>
+                <LocationPicker onLocationSelect={handleLocationSelect} defaultLat={34.8} defaultLng={38.0} />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-sm font-bold text-gray-700">مكان التجمع الدقيق (الوصف النصي) *</label>
                 <input type="text" {...register("location")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="الساحة، الحديقة، المركز..." />
                 <InputError error={errors.location?.message} />
               </div>
+              
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">تاريخ الفعالية *</label>
                 <input type="date" {...register("eventDate")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" />

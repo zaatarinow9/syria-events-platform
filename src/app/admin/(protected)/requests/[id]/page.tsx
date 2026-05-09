@@ -1,9 +1,10 @@
+// ID: ADMIN_DETAILS_GEO_REVIEW
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import StatusBadge from "@/components/admin/StatusBadge";
 import RequestActions from "@/components/admin/RequestActions";
-import { ArrowRight, User, Calendar, MapPin, Users, FileCheck, Clock, Mail, Phone, Building2, Trophy } from "lucide-react";
+import { ArrowRight, User, Calendar, MapPin, Users, FileCheck, Clock, Mail, Phone, Building2, Trophy, Navigation } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
@@ -19,13 +20,15 @@ export default async function RequestDetailsPage({ params }: { params: Promise<{
 
   if (error || !request) return notFound();
 
-  // تعديل منطق روابط الصور
   const approvalDocs = request.approval_documents || [];
   const imageUrls = approvalDocs.map((path: string) => {
-    // نستخدم الملف الخام إذا كان رابطاً كاملاً، أو نولده من Supabase
     if (path.startsWith('http')) return path;
     return supabase.storage.from("request-files").getPublicUrl(path).data.publicUrl;
   });
+
+  const mapsLink = request.latitude && request.longitude 
+    ? `https://www.google.com/maps/dir/?api=1&destination=$${request.latitude},${request.longitude}`
+    : `https://www.google.com/maps/search/$${encodeURIComponent(request.location + " " + request.governorate)}`;
 
   return (
     <div dir="rtl" className="space-y-8 pb-20">
@@ -52,15 +55,37 @@ export default async function RequestDetailsPage({ params }: { params: Promise<{
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6">
               <InfoItem icon={Calendar} label="تاريخ الفعالية" value={format(new Date(request.event_date), "dd MMMM yyyy", { locale: ar })} />
               <InfoItem icon={Clock} label="التوقيت" value={`من ${request.start_time} إلى ${request.end_time}`} />
-              <InfoItem icon={MapPin} label="الموقع" value={`${request.governorate} - ${request.city}`} />
-              <InfoItem icon={Building2} label="مكان التجمع" value={request.location} />
+              <InfoItem icon={MapPin} label="الموقع والنطاق" value={`${request.governorate} - ${request.city}`} />
               <InfoItem icon={Users} label="العدد المتوقع" value={`${request.expected_attendees} شخص`} />
               <InfoItem icon={FileCheck} label="نوع الفعالية" value={request.event_type} />
+              
+              <div className="flex items-start gap-3 md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <div className="p-2 bg-[#073D35]/10 rounded-lg"><MapPin className="w-5 h-5 text-[#073D35]" /></div>
+                <div>
+                  <p className="text-xs font-bold text-gray-400 mb-0.5">مكان التجمع الدقيق</p>
+                  <p className="text-sm font-bold text-gray-800 mb-2">{request.location}</p>
+                  <a 
+                    href={mapsLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#073D35] px-3 py-1.5 rounded-lg"
+                  >
+                    <Navigation className="w-3.5 h-3.5" />
+                    عرض مكان الدبوس المختار على الخريطة
+                  </a>
+                </div>
+              </div>
             </div>
             <div className="mt-8 pt-6 border-t border-gray-50">
               <h3 className="font-bold text-gray-900 mb-2">الهدف:</h3>
               <p className="text-gray-600 leading-relaxed">{request.event_goal}</p>
             </div>
+            {request.route && (
+              <div className="mt-4 pt-4 border-t border-gray-50">
+                <h3 className="font-bold text-gray-900 mb-2">خط السير:</h3>
+                <p className="text-gray-600 leading-relaxed">{request.route}</p>
+              </div>
+            )}
           </section>
 
           <section className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8">
@@ -87,6 +112,7 @@ export default async function RequestDetailsPage({ params }: { params: Promise<{
               <p className="text-sm text-gray-500">الاسم: <span className="text-gray-900">{request.full_name}</span></p>
               <p className="text-sm text-gray-500">الهاتف: <span className="text-gray-900">{request.phone}</span></p>
               <p className="text-sm text-gray-500">الإيميل: <span className="text-gray-900">{request.email}</span></p>
+              <p className="text-sm text-gray-500">الجهة: <span className="text-gray-900">{request.organization_name || "شخصي"}</span></p>
             </div>
           </section>
         </div>

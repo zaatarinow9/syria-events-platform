@@ -1,3 +1,4 @@
+// ID: EVENT_DETAILS_REAL_PIN_MAP
 "use client";
 
 import { useEffect, useState } from "react";
@@ -21,7 +22,7 @@ import {
   Loader2
 } from "lucide-react";
 
-// خريطة الإحداثيات لربط المحافظات بزر خرائط جوجل
+// خريطة الإحداثيات للاحتياط في حال لم يكن للطلب إحداثيات سابقة
 const GOV_COORDINATES: Record<string, [number, number]> = {
   "دمشق": [33.5138, 36.2765], "ريف دمشق": [33.5130, 36.3000], "حلب": [36.2021, 37.1343],
   "حمص": [34.7324, 36.7137], "حماة": [35.1318, 36.7578], "اللاذقية": [35.5132, 35.7863],
@@ -53,7 +54,6 @@ export default function EventDetailsPage() {
         .single();
 
       if (data && !error) {
-        // تهيئة البيانات لتناسب الواجهة
         setEvent({
           id: data.id,
           title: data.event_title,
@@ -70,7 +70,10 @@ export default function EventDetailsPage() {
           route: data.route,
           organizationName: data.organization_name,
           submitterRole: data.submitter_role,
-          coordinates: GOV_COORDINATES[data.governorate] || [34.8, 38.0]
+          // سحب الإحداثيات من الداتابيز مباشرة (وإلا نستخدم الاحتياطية)
+          coordinates: data.latitude && data.longitude 
+            ? [data.latitude, data.longitude] 
+            : (GOV_COORDINATES[data.governorate] || [34.8, 38.0])
         });
       }
       setLoading(false);
@@ -102,6 +105,7 @@ export default function EventDetailsPage() {
   const shareText = `ندعوكم لحضور ${event.type}: "${event.title}" في ${event.governorate} بتاريخ ${event.date}. التفاصيل عبر الرابط:`;
   const encodedText = encodeURIComponent(shareText);
   const encodedUrl = encodeURIComponent(currentUrl);
+  // استخدام رابط خرائط جوجل الدقيق المبني على الإحداثيات
   const mapsLink = `https://www.google.com/maps/dir/?api=1&destination=$${event.coordinates[0]},${event.coordinates[1]}`;
 
   const handleCopyLink = () => {
@@ -210,7 +214,6 @@ export default function EventDetailsPage() {
                     <p className="text-sm text-gray-500 font-bold mb-1">المكان الدقيق</p>
                     <p className="text-gray-900 font-medium mb-3">{event.location}</p>
                     
-                    {/* زر الاتجاهات للخرائط المباشر */}
                     <a 
                       href={mapsLink}
                       target="_blank"
@@ -218,7 +221,7 @@ export default function EventDetailsPage() {
                       className="inline-flex items-center gap-1.5 text-xs font-bold text-[#C8A75A] hover:text-[#b39550] bg-[#C8A75A]/10 hover:bg-[#C8A75A]/20 px-3 py-1.5 rounded-lg transition-colors border border-[#C8A75A]/20"
                     >
                       <Navigation className="w-3.5 h-3.5" />
-                      الاتجاهات للموقع عبر الخرائط
+                      الاتجاهات للموقع بدقة عبر الخرائط
                     </a>
                   </div>
                 </div>

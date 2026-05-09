@@ -1,3 +1,4 @@
+// ID: API_CREATE_GEO_STORAGE
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import nodemailer from "nodemailer";
@@ -29,6 +30,8 @@ export async function POST(req: Request) {
       governorate: data.governorate,
       city: data.city,
       location: data.location,
+      latitude: data.latitude, // إضافة الإحداثيات المستخرجة من الخريطة
+      longitude: data.longitude, // إضافة الإحداثيات المستخرجة من الخريطة
       event_date: data.eventDate,
       expected_attendees: data.expectedAttendees,
       start_time: data.startTime,

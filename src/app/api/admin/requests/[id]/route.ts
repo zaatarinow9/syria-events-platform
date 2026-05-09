@@ -24,6 +24,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
         });
 
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://syria-events-platform.vercel.app";
+        const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+        const eventUrl = `${cleanBaseUrl}/events/${updatedData.id}`;
+
         await transporter.sendMail({
           from: `"منصة وينكم" <${process.env.EMAIL_USER}>`,
           to: updatedData.email,
@@ -66,7 +70,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                           <table width="100%" cellpadding="0" cellspacing="0">
                             <tr>
                               <td align="center">
-                                <a href="${process.env.NEXT_PUBLIC_SITE_URL}/events/${updatedData.id}" style="display: inline-block; background-color: #073D35; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-weight: bold; font-size: 16px; border-bottom: 3px solid #052e28;">عرض صفحة الفعالية</a>
+                                <a href="${eventUrl}" style="display: inline-block; background-color: #073D35; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-weight: bold; font-size: 16px; border-bottom: 3px solid #052e28;">عرض صفحة الفعالية</a>
                               </td>
                             </tr>
                           </table>

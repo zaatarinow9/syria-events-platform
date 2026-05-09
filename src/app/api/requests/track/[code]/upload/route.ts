@@ -64,6 +64,6 @@ export async function POST(
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    return NextResponse.json({ error: "حدث خطأ أثناء الرفع" }, { status: 500 });
+    return NextResponse.json({ error: "حدث خطأ أثناء الررفع" }, { status: 500 });
   }
 }
