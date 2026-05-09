@@ -2,14 +2,11 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import nodemailer from "nodemailer";
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ code: string }> }
-) {
+export async function POST(req: Request, { params }: { params: Promise<{ code: string }> }) {
   try {
     const resolvedParams = await params;
     const code = resolvedParams.code.toUpperCase();
-    const formData = await request.formData();
+    const formData = await req.formData();
     const files = formData.getAll("files") as File[];
     const supabase = createAdminClient();
 
@@ -17,13 +14,13 @@ export async function POST(
       return NextResponse.json({ error: "يجب رفع من 1 إلى 3 صور فقط" }, { status: 400 });
     }
 
-    const { data: reqData, error: fetchError } = await supabase
+    const { data: request, error: fetchError } = await supabase
       .from("permit_requests")
       .select("id, event_title, approval_documents")
       .eq("request_number", code)
       .single();
 
-    if (fetchError || !reqData) {
+    if (fetchError || !request) {
       return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
     }
 
@@ -31,20 +28,22 @@ export async function POST(
     for (const file of files) {
       const buffer = Buffer.from(await file.arrayBuffer());
       const fileName = `${code}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
+      
       const { data, error } = await supabase.storage
         .from("request-files")
         .upload(fileName, buffer, { contentType: file.type });
+        
       if (!error && data) uploadedUrls.push(data.path);
     }
 
-    const currentDocs = reqData.approval_documents || [];
+    const currentDocs = request.approval_documents || [];
     const newDocs = [...currentDocs, ...uploadedUrls];
 
     await supabase
       .from("permit_requests")
       .update({ 
         approval_documents: newDocs, 
-        status: "waiting_approval_document"
+        status: "under_review" 
       })
       .eq("request_number", code);
 
@@ -55,10 +54,23 @@ export async function POST(
       });
 
       await transporter.sendMail({
-        from: process.env.EMAIL_USER,
+        from: `"نظام وينكم" <${process.env.EMAIL_USER}>`,
         to: "a7mad.y.alkilani@gmail.com",
-        subject: `تم رفع صور جديدة للطلب (${code})`,
-        html: `<div dir="rtl"><h2>صور موافقة جديدة</h2><p>رقم الطلب: ${code}</p><p>الفعالية: ${reqData.event_title}</p></div>`,
+        subject: `تحديث طلب: تم رفع وثائق جديدة (${code})`,
+        html: `
+          <div dir="rtl" style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;">
+            <div style="background-color: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd;">
+              <h2 style="color: #073D35; margin-top: 0;">مرفقات جديدة تتطلب المراجعة</h2>
+              <p>قام المستخدم برفع وثائق الموافقة للطلب التالي:</p>
+              <ul>
+                <li><strong>رقم الطلب:</strong> ${code}</li>
+                <li><strong>اسم الفعالية:</strong> ${request.event_title}</li>
+              </ul>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+              <p style="color: #666; font-size: 14px;">يرجى الدخول إلى لوحة التحكم لمراجعة الوثائق واتخاذ الإجراء المناسب.</p>
+            </div>
+          </div>
+        `,
       });
     }
 

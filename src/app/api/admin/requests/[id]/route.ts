@@ -4,11 +4,10 @@ import nodemailer from "nodemailer";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params; // انتظار الـ Promise لحل مشكلة Next.js 15
+    const { id } = await params;
     const body = await req.json();
     const supabase = createAdminClient();
 
-    // 1. تحديث الطلب في قاعدة البيانات
     const { data: updatedData, error } = await supabase
       .from("permit_requests")
       .update(body)
@@ -18,7 +17,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     if (error) throw error;
 
-    // 2. إذا كانت الحالة الجديدة "published" (منشور/موافق عليه)، أرسل إيميلاً للمستخدم
     if (body.status === "published" && updatedData) {
       if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
         const transporter = nodemailer.createTransport({
@@ -29,21 +27,65 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         await transporter.sendMail({
           from: `"منصة وينكم" <${process.env.EMAIL_USER}>`,
           to: updatedData.email,
-          subject: `تهانينا! تمت الموافقة على فعالية: ${updatedData.event_title}`,
+          subject: `تمت الموافقة! فعاليتك الآن منشورة على منصة وينكم 🎉`,
           html: `
-            <div dir="rtl" style="font-family: Arial, sans-serif; line-height: 1.6;">
-              <div style="background: #073D35; padding: 20px; text-align: center; border-radius: 10px;">
-                <h1 style="color: #C8A75A; margin: 0;">تمت الموافقة بنجاح</h1>
-              </div>
-              <div style="padding: 20px;">
-                <h2>مرحباً ${updatedData.full_name}،</h2>
-                <p>نود إعلامك بأن الإدارة قد وافقت على طلبك لتنظيم فعالية <strong>"${updatedData.event_title}"</strong>.</p>
-                <p>طلبك الآن منشور بشكل رسمي على المنصة ويمكن للجميع رؤيته.</p>
-                <p>نتمنى لكم فعالية ناجحة وموفقة.</p>
-                <hr style="border: none; border-top: 1px solid #eee;" />
-                <p style="font-size: 12px; color: #888;">هذا البريد مرسل تلقائياً من نظام منصة وينكم.</p>
-              </div>
-            </div>
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+              <meta charset="UTF-8">
+              <style>
+                @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+              </style>
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #F9FAFB; font-family: 'thmanyah', 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #F9FAFB; padding: 40px 20px;">
+                <tr>
+                  <td align="center">
+                    <table width="100%" max-width="600px" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(47, 158, 109, 0.1); border: 1px solid #f0f0f0;">
+                      <tr>
+                        <td style="background-color: #2F9E6D; padding: 40px 30px; text-align: center; border-bottom: 4px solid #1c744e;">
+                          <div style="background-color: rgba(255,255,255,0.2); width: 80px; height: 80px; border-radius: 40px; display: inline-block; line-height: 80px; margin-bottom: 15px;">
+                            <span style="font-size: 40px;">🎉</span>
+                          </div>
+                          <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">تمت الموافقة والنشر</h1>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 40px 30px;">
+                          <h2 style="color: #073D35; font-size: 24px; margin: 0 0 20px 0; font-weight: 700;">مرحباً ${updatedData.full_name}،</h2>
+                          <p style="color: #555555; font-size: 16px; line-height: 1.8; margin: 0 0 25px 0;">
+                            يسعدنا إعلامك بأنه قد تمت مراجعة الوثائق المرفقة وتمت الموافقة على طلبك بنجاح. فعاليتك <strong style="color: #073D35;">"${updatedData.event_title}"</strong> أصبحت الآن منشورة ومتاحة للجمهور عبر منصتنا.
+                          </p>
+                          
+                          <div style="background-color: #f8faf9; border-right: 4px solid #C8A75A; padding: 20px; border-radius: 8px 0 0 8px; margin-bottom: 30px;">
+                            <p style="color: #333333; margin: 0; font-size: 15px; line-height: 1.6; font-weight: 500;">
+                              نحن فخورون بجهودكم في تنظيم الأنشطة المدنية ونتمنى لكم فعالية ناجحة ومثمرة تلبي كافة التطلعات.
+                            </p>
+                          </div>
+
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td align="center">
+                                <a href="${process.env.NEXT_PUBLIC_SITE_URL}/events/${updatedData.id}" style="display: inline-block; background-color: #073D35; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-weight: bold; font-size: 16px; border-bottom: 3px solid #052e28;">عرض صفحة الفعالية</a>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="background-color: #f5f8f7; padding: 25px; text-align: center; border-top: 1px solid #eeeeee;">
+                          <p style="color: #888888; font-size: 13px; margin: 0; line-height: 1.6;">
+                            مع تحيات فريق عمل<br>
+                            <strong style="color: #073D35;">منصة وينكم للفعاليات</strong>
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </body>
+            </html>
           `,
         });
       }
@@ -51,7 +93,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("PATCH Error:", err);
     return NextResponse.json({ error: "فشل التحديث" }, { status: 500 });
   }
 }

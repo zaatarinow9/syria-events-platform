@@ -52,42 +52,102 @@ export async function POST(req: Request) {
         auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
       });
 
-      // 1. إشعار للإدارة
-      await transporter.sendMail({
-        from: `"نظام وينكم" <${process.env.EMAIL_USER}>`,
-        to: "a7mad.y.alkilani@gmail.com",
-        subject: `طلب جديد: ${data.eventTitle} (${request_number})`,
-        html: `<div dir="rtl"><h2>وصل طلب جديد للمراجعة</h2><p>الفعالية: ${data.eventTitle}</p></div>`,
-      });
-
-      // 2. إشعار للمستخدم (احترافي)
       await transporter.sendMail({
         from: `"منصة وينكم" <${process.env.EMAIL_USER}>`,
         to: data.email,
-        subject: `تأكيد استلام طلبك - كود التتبع: ${request_number}`,
+        subject: `تم استلام طلبك بنجاح | كود التتبع: ${request_number}`,
         html: `
-          <div dir="rtl" style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="background: #073D35; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
-              <h1 style="color: #C8A75A; margin: 0;">منصة وينكم للفعاليات</h1>
-            </div>
-            <div style="padding: 30px; border: 1px solid #eee; border-top: none; border-radius: 0 0 10px 10px;">
-              <h2 style="color: #073D35;">أهلاً بك يا ${data.fullName}،</h2>
-              <p>لقد تم استلام طلبك لتنظيم فعالية <strong>"${data.eventTitle}"</strong> بنجاح.</p>
-              <div style="background: #fdfbf7; border: 1px solid #C8A75A; padding: 20px; text-align: center; border-radius: 10px; margin: 20px 0;">
-                <p style="margin: 0; color: #555;">كود التتبع المرجعي الخاص بك:</p>
-                <h2 style="margin: 10px 0; font-family: monospace; letter-spacing: 5px; color: #073D35;">${request_number}</h2>
-              </div>
-              <h3>تفاصيل الطلب:</h3>
-              <ul style="list-style: none; padding: 0;">
-                <li>📍 <strong>الموقع:</strong> ${data.governorate} - ${data.city}</li>
-                <li>📅 <strong>التاريخ:</strong> ${data.eventDate}</li>
-                <li>⏰ <strong>الوقت:</strong> من ${data.startTime} إلى ${data.endTime}</li>
-              </ul>
-              <p>يمكنك الآن استخدام هذا الكود لتتبع حالة الطلب ورفع وثائق الموافقة الرسمية عبر الرابط أدناه:</p>
-              <div style="text-align: center; margin-top: 30px;">
-                <a href="${process.env.NEXT_PUBLIC_SITE_URL}/track" style="background: #073D35; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-bold: true;">تتبع الطلب الآن</a>
-              </div>
-            </div>
+          <!DOCTYPE html>
+          <html lang="ar" dir="rtl">
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+            </style>
+          </head>
+          <body style="margin: 0; padding: 0; background-color: #F9FAFB; font-family: 'thmanyah', 'Tajawal', 'Segoe UI', Tahoma, Arial, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #F9FAFB; padding: 40px 20px;">
+              <tr>
+                <td align="center">
+                  <table width="100%" max-width="600px" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(7, 61, 53, 0.08); border: 1px solid #f0f0f0;">
+                    <tr>
+                      <td style="background-color: #073D35; padding: 40px 30px; text-align: center; border-bottom: 4px solid #C8A75A;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 700;">منصة وينكم</h1>
+                        <p style="color: #C8A75A; margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">للفعاليات والتجمعات المدنية السورية</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 40px 30px;">
+                        <h2 style="color: #073D35; font-size: 24px; margin: 0 0 20px 0; font-weight: 700;">أهلاً بك، ${data.fullName}</h2>
+                        <p style="color: #555555; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0;">
+                          لقد تم تسجيل طلبك لتنظيم فعالية <strong style="color: #073D35;">"${data.eventTitle}"</strong> في نظامنا بنجاح. يرجى الاحتفاظ بكود التتبع أدناه للرجوع لطلبك وإرفاق المستندات المطلوبة.
+                        </p>
+                        
+                        <div style="background-color: #FDFBF7; border: 1px dashed #C8A75A; border-radius: 16px; padding: 25px; text-align: center; margin-bottom: 30px;">
+                          <p style="color: #666666; font-size: 14px; margin: 0 0 10px 0; font-weight: 500;">كود التتبع المرجعي</p>
+                          <div style="font-family: monospace; font-size: 36px; font-weight: bold; color: #073D35; letter-spacing: 8px;">${request_number}</div>
+                        </div>
+
+                        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8faf9; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
+                          <tr>
+                            <td style="padding-bottom: 15px;">
+                              <span style="color: #888888; font-size: 13px; display: block; margin-bottom: 4px;">موقع الفعالية</span>
+                              <strong style="color: #333333; font-size: 15px;">${data.governorate} - ${data.city}</strong>
+                            </td>
+                            <td style="padding-bottom: 15px;">
+                              <span style="color: #888888; font-size: 13px; display: block; margin-bottom: 4px;">تاريخ الفعالية</span>
+                              <strong style="color: #333333; font-size: 15px;">${data.eventDate}</strong>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <span style="color: #888888; font-size: 13px; display: block; margin-bottom: 4px;">توقيت البداية</span>
+                              <strong style="color: #333333; font-size: 15px;" dir="ltr">${data.startTime}</strong>
+                            </td>
+                            <td>
+                              <span style="color: #888888; font-size: 13px; display: block; margin-bottom: 4px;">توقيت النهاية</span>
+                              <strong style="color: #333333; font-size: 15px;" dir="ltr">${data.endTime}</strong>
+                            </td>
+                          </tr>
+                        </table>
+
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td align="center">
+                              <a href="${process.env.NEXT_PUBLIC_SITE_URL}/track" style="display: inline-block; background-color: #073D35; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-weight: bold; font-size: 16px; border-bottom: 3px solid #052e28;">تتبع حالة الطلب الآن</a>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="background-color: #f5f8f7; padding: 25px; text-align: center; border-top: 1px solid #eeeeee;">
+                        <p style="color: #888888; font-size: 13px; margin: 0; line-height: 1.6;">
+                          هذا البريد الإلكتروني مُرسل آلياً من نظام منصة وينكم.<br>
+                          يرجى عدم الرد على هذا البريد.
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+          </html>
+        `,
+      });
+
+      await transporter.sendMail({
+        from: `"نظام وينكم" <${process.env.EMAIL_USER}>`,
+        to: "a7mad.y.alkilani@gmail.com",
+        subject: `إشعار إداري: طلب جديد (${request_number})`,
+        html: `
+          <div dir="rtl" style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2 style="color: #073D35;">يوجد طلب ترخيص جديد بانتظار المراجعة</h2>
+            <p><strong>رقم المرجع:</strong> ${request_number}</p>
+            <p><strong>اسم الفعالية:</strong> ${data.eventTitle}</p>
+            <p><strong>المحافظة:</strong> ${data.governorate}</p>
+            <p><strong>مقدم الطلب:</strong> ${data.fullName}</p>
           </div>
         `,
       });
