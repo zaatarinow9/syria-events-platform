@@ -1,10 +1,9 @@
 @import "tailwindcss";
 
-/* هذا هو الكود السحري الذي يجبر كامل الموقع على استخدام الأرقام الإنجليزية */
 @font-face {
   font-family: 'EnglishNumbers';
   src: local('Arial'), local('Helvetica'), local('sans-serif');
-  unicode-range: U+0030-0039; /* نطاق الأرقام من 0 إلى 9 */
+  unicode-range: U+0030-0039;
 }
 
 :root {
@@ -15,12 +14,19 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  /* تطبيق خط الأرقام أولاً، ثم خط ثمانية للنصوص */
   font-family: 'EnglishNumbers', var(--font-thmanyah), system-ui, -apple-system, sans-serif !important;
   direction: rtl;
-  /* إجبار المتصفح على عدم تشويه الأرقام */
   font-feature-settings: "locl" 0, "liga" 0;
   font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* --- السطر السحري: إجبار مكتبة الخرائط على استخدام خط ثمانية --- */
+.leaflet-container,
+.leaflet-popup,
+.leaflet-popup-content-wrapper,
+.leaflet-popup-content,
+.leaflet-tooltip {
+  font-family: 'EnglishNumbers', var(--font-thmanyah), system-ui, -apple-system, sans-serif !important;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
