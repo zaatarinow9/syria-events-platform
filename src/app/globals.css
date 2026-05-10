@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'EnglishNumbersOnly';
+  src: local('Arial'), local('Helvetica'), local('sans-serif');
+  unicode-range: U+0030-0039;
+}
+
 :root {
   --background: #F9FAFB;
   --foreground: #111827;
@@ -8,8 +14,10 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-thmanyah), system-ui, -apple-system, sans-serif !important;
+  font-family: 'EnglishNumbersOnly', var(--font-thmanyah), system-ui, -apple-system, sans-serif !important;
   direction: rtl;
+  font-feature-settings: "locl" 0, "liga" 0;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
