@@ -76,7 +76,8 @@ export default function Home() {
           id: req.id,
           title: req.event_title,
           location: `${req.governorate} - ${req.city || req.location}`,
-          date: new Date(req.event_date).toLocaleDateString('ar-SY', { day: '2-digit', month: 'long', year: 'numeric' }),
+          // إجبار التواريخ على الأرقام الإنجليزية عبر ar-SY-u-nu-latn
+          date: new Date(req.event_date).toLocaleDateString('ar-SY-u-nu-latn', { day: '2-digit', month: 'long', year: 'numeric' }),
           isoDate: req.event_date,
           time: `${req.start_time} - ${req.end_time}`,
           type: req.event_type,
