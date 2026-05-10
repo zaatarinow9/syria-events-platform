@@ -116,8 +116,7 @@ export default function CreateRequestPage() {
               <CheckCircle2 className="h-12 w-12 text-green-500" />
             </div>
             <h2 className="mb-3 text-3xl font-bold text-gray-900">تم تسجيل طلبك وتجهيز المستند</h2>
-            <p className="mb-8 text-gray-500 font-medium">هذا هو الكود المرجعي الخاص بك. احتفظ به جيداً لتتمكن من تتبع طلبك وإرفاق الصور لاحقاً:</p>
-            <div className="mb-10 inline-block rounded-xl border border-[#C8A75A]/30 bg-[#FDFBF7] px-12 py-6 font-mono text-4xl font-bold tracking-[0.2em] text-[#C8A75A]">
+            <p className="mb-8 text-gray-500 font-medium">لتتمكن من نشر طلبك بشكل كامل على منصّة وينكم نطلب منك حفظ هذا الرقم المرجعي لتتمكن من إرفاق صورة الموافقة بعد الحصول عليها من المحافظة المسؤولة وبعد التأكّد من صحة الموافقة يتم نشر فعاليتك بشكل رسمي على منصّة وينكم</p>             <div className="mb-10 inline-block rounded-xl border border-[#C8A75A]/30 bg-[#FDFBF7] px-12 py-6 font-mono text-4xl font-bold tracking-[0.2em] text-[#C8A75A]">
               {requestNumber}
             </div>
             <div className="mb-8 flex flex-col justify-center gap-4 sm:flex-row">
