@@ -1,33 +1,17 @@
-// ID: CREATE_REQUEST_PRO_UI
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import {
-  ArrowRight,
-  FileText,
-  Globe,
-  User,
-  CalendarDays,
-  Users,
-  CheckSquare,
-  Info,
-  CheckCircle2,
-  Download,
-  MapPin,
-  Clock,
-  Loader2
-} from "lucide-react";
-import {
-  permitRequestSchema,
-  type PermitRequestFormValues,
-  type PledgeFieldName,
-} from "@/lib/validations/permitRequestSchema";
+import { ArrowRight, FileText, User, CalendarDays, Users, CheckSquare, Info, CheckCircle2, Download, MapPin, Loader2, Globe } from "lucide-react";
+import { permitRequestSchema, type PermitRequestFormValues, type PledgeFieldName } from "@/lib/validations/permitRequestSchema";
 import { GOVERNORATES } from "@/lib/constants/governorates";
 import { EVENT_TYPES } from "@/lib/constants/eventTypes";
+
+// استيراد المكونات المخصصة والفخمة للتاريخ والوقت
+import { CustomDatePicker, CustomTimePicker } from "@/components/shared/CustomPickers";
 
 const LocationPicker = dynamic(() => import("@/components/shared/LocationPicker"), { 
   ssr: false,
@@ -66,12 +50,7 @@ export default function CreateRequestPage() {
   const [mapCoordinates, setMapCoordinates] = useState({ lat: 34.8, lng: 38.0 });
   const [submitError, setSubmitError] = useState("");
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors, isSubmitting },
-  } = useForm<PermitRequestFormValues>({
+  const { register, handleSubmit, control, formState: { errors, isSubmitting } } = useForm<PermitRequestFormValues>({
     resolver: zodResolver(permitRequestSchema),
   });
 
@@ -126,14 +105,7 @@ export default function CreateRequestPage() {
           @media print {
             .no-print { display: none !important; }
             .print-reset { min-height: 0 !important; padding: 0 !important; background-color: white !important; }
-            .print-only {
-              display: block !important;
-              width: 100%;
-              color: #000000 !important;
-              background-color: #ffffff !important;
-              padding: 10mm 15mm !important;
-              box-sizing: border-box !important;
-            }
+            .print-only { display: block !important; width: 100%; color: #000000 !important; background-color: #ffffff !important; padding: 10mm 15mm !important; box-sizing: border-box !important; }
             body { background-color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0 !important; padding: 0 !important; }
             @page { size: A4 portrait; margin: 0mm !important; }
           }
@@ -278,8 +250,8 @@ export default function CreateRequestPage() {
         </div>
 
         {submitError && (
-          <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 font-bold text-center">
-            {submitError}
+          <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 font-bold text-center flex items-center justify-center gap-2">
+            <Info className="w-5 h-5"/> {submitError}
           </div>
         )}
 
@@ -364,22 +336,16 @@ export default function CreateRequestPage() {
                 <InputError error={errors.location?.message} />
               </div>
               
-              {/* تصميم احترافي لحقل التاريخ */}
+              {/* مكون التاريخ الفخم الجديد */}
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">تاريخ الفعالية *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                    <CalendarDays className="h-5 w-5 text-[#C8A75A]" />
-                  </div>
-                  <input 
-                    type="date" 
-                    {...register("eventDate")} 
-                    className="block w-full rounded-xl border border-gray-200 bg-gray-50 py-3.5 pr-12 pl-4 outline-none focus:border-[#C8A75A] transition-all font-medium text-gray-700 cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full" 
-                  />
-                </div>
-                <InputError error={errors.eventDate?.message} />
+                <Controller 
+                  name="eventDate" 
+                  control={control} 
+                  render={({ field }) => <CustomDatePicker value={field.value} onChange={field.onChange} error={errors.eventDate?.message} />} 
+                />
               </div>
-
+              
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">العدد المتوقع للحضور *</label>
                 <div className="relative">
@@ -391,35 +357,22 @@ export default function CreateRequestPage() {
                 <InputError error={errors.expectedAttendees?.message} />
               </div>
 
-              {/* تصميم احترافي لحقول الوقت */}
+              {/* مكونات الوقت الفخمة الجديدة */}
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">وقت البداية *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                    <Clock className="h-5 w-5 text-[#C8A75A]" />
-                  </div>
-                  <input 
-                    type="time" 
-                    {...register("startTime")} 
-                    className="block w-full rounded-xl border border-gray-200 bg-gray-50 py-3.5 pr-12 pl-4 outline-none focus:border-[#C8A75A] transition-all font-medium text-gray-700 cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full" 
-                  />
-                </div>
-                <InputError error={errors.startTime?.message} />
+                <Controller 
+                  name="startTime" 
+                  control={control} 
+                  render={({ field }) => <CustomTimePicker value={field.value} onChange={field.onChange} error={errors.startTime?.message} />} 
+                />
               </div>
-              
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">وقت النهاية *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                    <Clock className="h-5 w-5 text-[#C8A75A]" />
-                  </div>
-                  <input 
-                    type="time" 
-                    {...register("endTime")} 
-                    className="block w-full rounded-xl border border-gray-200 bg-gray-50 py-3.5 pr-12 pl-4 outline-none focus:border-[#C8A75A] transition-all font-medium text-gray-700 cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full" 
-                  />
-                </div>
-                <InputError error={errors.endTime?.message} />
+                <Controller 
+                  name="endTime" 
+                  control={control} 
+                  render={({ field }) => <CustomTimePicker value={field.value} onChange={field.onChange} error={errors.endTime?.message} />} 
+                />
               </div>
 
               <div className="md:col-span-2">

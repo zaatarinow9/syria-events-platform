@@ -1,15 +1,17 @@
-// ID: CUSTOM_LUXURY_PICKERS
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { CalendarDays, Clock, ChevronRight, ChevronLeft, X } from "lucide-react";
+import { CalendarDays, Clock, ChevronRight, ChevronLeft, X, CheckCircle2 } from "lucide-react";
 
-// --- مكون اختيار التاريخ الفخم ---
+// ----------------------------------------------------
+// 1. مكون اختيار التاريخ الاحترافي (Custom Date Picker)
+// ----------------------------------------------------
 export function CustomDatePicker({ value, onChange, placeholder = "اختر التاريخ", error }: any) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState(value ? new Date(value) : new Date());
   const popupRef = useRef<HTMLDivElement>(null);
 
+  // إغلاق النافذة عند النقر خارجها
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (popupRef.current && !popupRef.current.contains(e.target as Node)) setIsOpen(false);
@@ -25,7 +27,6 @@ export function CustomDatePicker({ value, onChange, placeholder = "اختر ال
 
   const handleDateSelect = (day: number) => {
     const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    // Format YYYY-MM-DD
     const formatted = `${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     onChange(formatted);
     setIsOpen(false);
@@ -35,7 +36,7 @@ export function CustomDatePicker({ value, onChange, placeholder = "اختر ال
     <div className="relative w-full" ref={popupRef}>
       <div 
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between p-3.5 rounded-xl border bg-gray-50 cursor-pointer transition-all ${isOpen ? 'border-[#C8A75A] ring-2 ring-[#C8A75A]/20' : 'border-gray-200 hover:border-[#C8A75A]/50'}`}
+        className={`w-full flex items-center justify-between p-3.5 rounded-xl border bg-gray-50 cursor-pointer transition-all ${isOpen ? 'border-[#C8A75A] ring-2 ring-[#C8A75A]/20 bg-white' : 'border-gray-200 hover:border-[#C8A75A]/50'}`}
       >
         <span className={value ? "text-gray-900 font-bold" : "text-gray-400 font-medium"}>
           {value || placeholder}
@@ -44,14 +45,14 @@ export function CustomDatePicker({ value, onChange, placeholder = "اختر ال
       </div>
       
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[9999] p-4 animate-in fade-in zoom-in-95 duration-200">
-          <div className="flex items-center justify-between mb-4">
-            <button type="button" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600"><ChevronRight className="w-5 h-5"/></button>
-            <div className="font-bold text-[#073D35]">{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</div>
-            <button type="button" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600"><ChevronLeft className="w-5 h-5"/></button>
+        <div className="absolute top-full mt-2 w-[320px] bg-white rounded-2xl shadow-2xl border border-gray-100 z-[9999] p-5 right-0 animate-in fade-in zoom-in-95 duration-200">
+          <div className="flex items-center justify-between mb-6 bg-gray-50 p-2 rounded-xl border border-gray-100">
+            <button type="button" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="p-1.5 hover:bg-white rounded-lg text-[#073D35] shadow-sm"><ChevronRight className="w-5 h-5"/></button>
+            <div className="font-bold text-[#073D35] text-lg">{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</div>
+            <button type="button" onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="p-1.5 hover:bg-white rounded-lg text-[#073D35] shadow-sm"><ChevronLeft className="w-5 h-5"/></button>
           </div>
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {weekDays.map(d => <div key={d} className="text-center text-[10px] font-bold text-gray-400">{d}</div>)}
+          <div className="grid grid-cols-7 gap-1 mb-3">
+            {weekDays.map(d => <div key={d} className="text-center text-xs font-bold text-gray-400">{d}</div>)}
           </div>
           <div className="grid grid-cols-7 gap-1">
             {Array.from({ length: startDay }).map((_, i) => <div key={`empty-${i}`} />)}
@@ -64,7 +65,7 @@ export function CustomDatePicker({ value, onChange, placeholder = "اختر ال
                   key={day}
                   type="button"
                   onClick={() => handleDateSelect(day)}
-                  className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${isSelected ? 'bg-[#073D35] text-[#C8A75A] shadow-md shadow-[#073D35]/20' : 'text-gray-700 hover:bg-[#C8A75A]/10 hover:text-[#073D35]'}`}
+                  className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold transition-all mx-auto ${isSelected ? 'bg-[#073D35] text-[#C8A75A] shadow-md shadow-[#073D35]/20 scale-110' : 'text-gray-700 hover:bg-[#C8A75A]/10 hover:text-[#073D35]'}`}
                 >
                   {day}
                 </button>
@@ -78,12 +79,14 @@ export function CustomDatePicker({ value, onChange, placeholder = "اختر ال
   );
 }
 
-// --- مكون اختيار الوقت الفخم ---
-export function CustomTimePicker({ value, onChange, placeholder = "اختر الوقت", error }: any) {
+// ----------------------------------------------------
+// 2. مكون اختيار الوقت الاحترافي (Custom Time Picker)
+// ----------------------------------------------------
+export function CustomTimePicker({ value, onChange, placeholder = "اختر التوقيت", error }: any) {
   const [isOpen, setIsOpen] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
 
-  // Parse existing HH:mm to 12-hour format
+  // تحويل الوقت من 24 إلى 12 ليتمكن من قراءته
   const parseTime = (val: string) => {
     if (!val) return { h: "12", m: "00", ampm: "AM" };
     let [hours, minutes] = val.split(":");
@@ -118,7 +121,7 @@ export function CustomTimePicker({ value, onChange, placeholder = "اختر ال
     <div className="relative w-full" ref={popupRef}>
       <div 
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between p-3.5 rounded-xl border bg-gray-50 cursor-pointer transition-all ${isOpen ? 'border-[#C8A75A] ring-2 ring-[#C8A75A]/20' : 'border-gray-200 hover:border-[#C8A75A]/50'}`}
+        className={`w-full flex items-center justify-between p-3.5 rounded-xl border bg-gray-50 cursor-pointer transition-all ${isOpen ? 'border-[#C8A75A] ring-2 ring-[#C8A75A]/20 bg-white' : 'border-gray-200 hover:border-[#C8A75A]/50'}`}
       >
         <span className={value ? "text-gray-900 font-bold" : "text-gray-400 font-medium"} dir="ltr">
           {displayValue || placeholder}
@@ -127,42 +130,61 @@ export function CustomTimePicker({ value, onChange, placeholder = "اختر ال
       </div>
 
       {isOpen && (
-        <div className="absolute top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[9999] p-4 right-0 animate-in fade-in zoom-in-95 duration-200">
-          <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
-            <h4 className="font-bold text-[#073D35]">تحديد التوقيت</h4>
-            <button type="button" onClick={() => setIsOpen(false)}><X className="w-4 h-4 text-gray-400 hover:text-red-500"/></button>
+        <div className="absolute top-full mt-2 w-[320px] bg-white rounded-2xl shadow-2xl border border-gray-100 z-[9999] p-5 right-0 animate-in fade-in zoom-in-95 duration-200">
+          <div className="flex justify-between items-center mb-5 pb-3 border-b border-gray-100">
+            <h4 className="font-bold text-[#073D35] text-lg">تحديد التوقيت</h4>
+            <button type="button" onClick={() => setIsOpen(false)} className="bg-gray-100 p-1.5 rounded-full hover:bg-red-50 hover:text-red-500 transition-colors"><X className="w-4 h-4 text-gray-500"/></button>
           </div>
           
-          <div className="flex items-center justify-center gap-2 mb-6" dir="ltr">
-            {/* Hours */}
-            <select 
-              value={time.h} 
-              onChange={e => setTime({...time, h: e.target.value})}
-              className="appearance-none bg-gray-50 border border-gray-200 text-xl font-bold rounded-xl px-3 py-2 outline-none focus:border-[#C8A75A] text-center"
-            >
-              {Array.from({ length: 12 }).map((_, i) => {
-                const val = String(i + 1).padStart(2, '0');
-                return <option key={val} value={val}>{val}</option>;
-              })}
-            </select>
-            <span className="font-bold text-gray-400 text-xl">:</span>
-            {/* Minutes */}
-            <select 
-              value={time.m} 
-              onChange={e => setTime({...time, m: e.target.value})}
-              className="appearance-none bg-gray-50 border border-gray-200 text-xl font-bold rounded-xl px-3 py-2 outline-none focus:border-[#C8A75A] text-center"
-            >
-              {["00", "15", "30", "45"].map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
-            {/* AM/PM */}
-            <div className="flex flex-col gap-1 ml-2">
-              <button type="button" onClick={() => setTime({...time, ampm: "AM"})} className={`text-xs font-bold px-2 py-1 rounded-md transition-colors ${time.ampm === "AM" ? 'bg-[#073D35] text-[#C8A75A]' : 'bg-gray-100 text-gray-500'}`}>ص</button>
-              <button type="button" onClick={() => setTime({...time, ampm: "PM"})} className={`text-xs font-bold px-2 py-1 rounded-md transition-colors ${time.ampm === "PM" ? 'bg-[#073D35] text-[#C8A75A]' : 'bg-gray-100 text-gray-500'}`}>م</button>
+          <div className="flex gap-4 mb-6" dir="ltr">
+            {/* الساعات */}
+            <div className="flex-1 bg-gray-50 rounded-xl p-2 border border-gray-100">
+              <p className="text-center text-xs font-bold text-gray-400 mb-2">الساعة</p>
+              <div className="h-40 overflow-y-auto custom-scrollbar flex flex-col gap-1 pr-1">
+                {Array.from({ length: 12 }).map((_, i) => {
+                  const val = String(i + 1).padStart(2, '0');
+                  return (
+                    <button 
+                      key={`h-${val}`} 
+                      type="button" 
+                      onClick={() => setTime({...time, h: val})}
+                      className={`w-full py-2 rounded-lg text-sm font-bold transition-all ${time.h === val ? 'bg-[#073D35] text-[#C8A75A] shadow-sm' : 'text-gray-600 hover:bg-gray-200'}`}
+                    >
+                      {val}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center font-bold text-gray-300 text-2xl">:</div>
+
+            {/* الدقائق */}
+            <div className="flex-1 bg-gray-50 rounded-xl p-2 border border-gray-100">
+              <p className="text-center text-xs font-bold text-gray-400 mb-2">الدقيقة</p>
+              <div className="h-40 overflow-y-auto custom-scrollbar flex flex-col gap-1 pr-1">
+                {["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"].map(m => (
+                  <button 
+                    key={`m-${m}`} 
+                    type="button" 
+                    onClick={() => setTime({...time, m})}
+                    className={`w-full py-2 rounded-lg text-sm font-bold transition-all ${time.m === m ? 'bg-[#073D35] text-[#C8A75A] shadow-sm' : 'text-gray-600 hover:bg-gray-200'}`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* صباحاً ومساءً */}
+            <div className="w-16 flex flex-col justify-center gap-2">
+              <button type="button" onClick={() => setTime({...time, ampm: "AM"})} className={`flex-1 rounded-xl text-sm font-bold transition-all border ${time.ampm === "AM" ? 'bg-[#C8A75A]/20 border-[#C8A75A] text-[#073D35] shadow-sm' : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'}`}>ص</button>
+              <button type="button" onClick={() => setTime({...time, ampm: "PM"})} className={`flex-1 rounded-xl text-sm font-bold transition-all border ${time.ampm === "PM" ? 'bg-[#C8A75A]/20 border-[#C8A75A] text-[#073D35] shadow-sm' : 'bg-gray-50 border-gray-100 text-gray-400 hover:bg-gray-100'}`}>م</button>
             </div>
           </div>
 
-          <button type="button" onClick={handleConfirm} className="w-full bg-[#C8A75A] text-[#073D35] font-bold py-2.5 rounded-xl hover:bg-[#b39550] transition-colors">
-            تأكيد التوقيت
+          <button type="button" onClick={handleConfirm} className="w-full bg-[#073D35] text-white font-bold py-3.5 rounded-xl hover:bg-[#052e28] transition-all shadow-md shadow-[#073D35]/20 flex items-center justify-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-[#C8A75A]" /> اعتماد التوقيت
           </button>
         </div>
       )}
