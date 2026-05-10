@@ -5,21 +5,20 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import { Search, Loader2, MapPin, Globe, Map as MapIcon, Plus, Minus } from "lucide-react";
 
-// تصميم الدبوس الفخم والمخصص بألوان المنصة
+// تصميم الدبوس المودرن المسطح المصغر (نفس الحجم الجديد)
 const elegantIcon = L.divIcon({
   className: 'bg-transparent border-0',
   html: `
-    <div class="relative flex flex-col items-center justify-center drop-shadow-xl transition-transform hover:scale-110">
-      <svg width="44" height="44" viewBox="0 0 24 24" fill="#073D35" stroke="#C8A75A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M20 10.3333C20 15.8571 12 22 12 22C12 22 4 15.8571 4 10.3333C4 8.21015 4.84285 6.17387 6.34315 4.67357C7.84344 3.17327 9.87971 2.33333 12 2.33333C14.1203 2.33333 16.1566 3.17327 17.6569 4.67357C19.1571 6.17387 20 8.21015 20 10.3333Z"></path>
-        <circle cx="12" cy="10" r="3.5" fill="#C8A75A" stroke="none"></circle>
+    <div class="relative flex flex-col items-center justify-center transition-transform hover:scale-110">
+      <svg width="28" height="36" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 0C5.37258 0 0 5.37258 0 12C0 22 12 32 12 32C12 32 24 22 24 12C24 5.37258 18.6274 0 12 0Z" fill="#073D35"/>
+        <circle cx="12" cy="12" r="4.5" fill="white" />
       </svg>
-      <div class="w-4 h-1.5 bg-black/20 blur-[2px] rounded-full mt-[-6px]"></div>
     </div>
   `,
-  iconSize: [44, 44],
-  iconAnchor: [22, 40],
-  popupAnchor: [0, -40],
+  iconSize: [28, 36], // الحجم الأصغر
+  iconAnchor: [14, 36],
+  popupAnchor: [0, -32],
 });
 
 interface LocationPickerProps {
@@ -80,19 +79,29 @@ export default function LocationPicker({
       },
     });
 
-    const eventHandlers = useMemo(() => ({
-      dragend(e: any) {
-        if (readOnly) return;
-        const marker = e.target;
-        if (marker != null) {
-          const latLng = marker.getLatLng();
-          setPosition([latLng.lat, latLng.lng]);
-          onLocationSelect(latLng.lat, latLng.lng);
-        }
-      },
-    }), [readOnly, onLocationSelect]);
+    const eventHandlers = useMemo(
+      () => ({
+        dragend(e: any) {
+          if (readOnly) return;
+          const marker = e.target;
+          if (marker != null) {
+            const newPos: [number, number] = [marker.getLatLng().lat, marker.getLatLng().lng];
+            setPosition(newPos);
+            onLocationSelect(newPos[0], newPos[1]);
+          }
+        },
+      }),
+      [readOnly, onLocationSelect]
+    );
 
-    return <Marker draggable={!readOnly} eventHandlers={eventHandlers} position={position} icon={elegantIcon} />;
+    return (
+      <Marker
+        draggable={!readOnly}
+        eventHandlers={eventHandlers}
+        position={position}
+        icon={elegantIcon}
+      />
+    );
   }
 
   const tileUrl = mapType === 'streets' 
@@ -128,7 +137,7 @@ export default function LocationPicker({
         </div>
       )}
 
-      <div className={`relative h-[400px] w-full rounded-2xl overflow-hidden border-2 border-[#C8A75A]/30 shadow-lg z-0 ${readOnly ? 'opacity-90' : ''}`}>
+      <div className={`relative h-[350px] w-full rounded-xl overflow-hidden border-2 border-[#C8A75A]/30 shadow-inner z-0 ${readOnly ? 'opacity-90' : ''}`}>
         
         <div className="absolute top-4 right-4 z-[1000] flex bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-xl border border-gray-200">
           <button 

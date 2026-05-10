@@ -20,21 +20,21 @@ const EVENT_COLORS = [
   "#84cc16"  
 ];
 
-// دبوس مودرن احترافي ومسطح (Flat Design) بدون أي ظلال مزعجة
+// دبوس مودرن احترافي بحجم أصغر وتصميم مسطح
 const createElegantIcon = (color: string) => {
   return L.divIcon({
     className: 'bg-transparent border-0',
     html: `
       <div class="relative flex flex-col items-center justify-center transition-transform hover:scale-110">
-        <svg width="36" height="46" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="28" height="36" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 0C5.37258 0 0 5.37258 0 12C0 22 12 32 12 32C12 32 24 22 24 12C24 5.37258 18.6274 0 12 0Z" fill="${color}"/>
-          <circle cx="12" cy="12" r="5" fill="white" />
+          <circle cx="12" cy="12" r="4.5" fill="white" />
         </svg>
       </div>
     `,
-    iconSize: [36, 46],
-    iconAnchor: [18, 46],
-    popupAnchor: [0, -40],
+    iconSize: [28, 36], // تم تصغير الحجم هنا
+    iconAnchor: [14, 36], // ضبط نقطة ارتكاز الدبوس لتناسب الحجم الجديد
+    popupAnchor: [0, -32], // ضبط مكان ظهور الكارد فوق الدبوس
   });
 };
 
@@ -110,26 +110,27 @@ export default function EventsMap({ events, center, zoom }: EventsMapProps) {
           return (
             <Marker key={event.id} position={event.coordinates} icon={dynamicIcon}>
               <Popup className="custom-popup" closeButton={false}>
-                <div className="p-4 w-64 arabic-premium-text" dir="rtl">
-                  <div className="flex justify-between items-start mb-3">
+                {/* تم إجبار محاذاة النص لليمين (text-right) */}
+                <div className="p-4 w-64 arabic-premium-text text-right" dir="rtl">
+                  <div className="flex justify-start items-start mb-3">
                     <span 
                       style={{ color: eventColor, backgroundColor: `${eventColor}15`, borderColor: `${eventColor}30` }}
-                      className="text-[10px] font-bold px-2.5 py-1 rounded-md border"
+                      className="text-[10px] font-bold px-2.5 py-1 rounded-md border inline-block"
                     >
                       {event.type}
                     </span>
                   </div>
-                  <h3 className="font-bold text-gray-900 text-sm leading-tight mb-3">
+                  <h3 className="font-bold text-gray-900 text-sm leading-tight mb-3 text-right">
                     {event.title}
                   </h3>
                   <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-xs text-gray-600 font-medium">
-                      <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                      <span className="truncate">{event.location}</span>
+                    <div className="flex items-center justify-start gap-2 text-xs text-gray-600 font-medium">
+                      <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                      <span className="truncate text-right">{event.location}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-600 font-medium">
-                      <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                      <span className="font-sans" dir="ltr">{event.date}</span>
+                    <div className="flex items-center justify-start gap-2 text-xs text-gray-600 font-medium">
+                      <Calendar className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                      <span className="font-sans text-right" dir="ltr">{event.date}</span>
                     </div>
                   </div>
                   
