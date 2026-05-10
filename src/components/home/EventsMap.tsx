@@ -3,25 +3,38 @@
 import { useState, useRef, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
-import { MapPin, Calendar, Clock, Navigation, Globe, Map as MapIcon, Plus, Minus, ArrowUpLeft } from "lucide-react";
+import { MapPin, Calendar, Clock, Globe, Map as MapIcon, Plus, Minus, ArrowUpLeft } from "lucide-react";
 import Link from "next/link";
 
-// تصميم الدبوس الفخم والمخصص بألوان المنصة (بدون صورة، بل SVG نقي وعالي الدقة)
-const elegantIcon = L.divIcon({
-  className: 'bg-transparent border-0',
-  html: `
-    <div class="relative flex flex-col items-center justify-center drop-shadow-xl transition-transform hover:scale-110">
-      <svg width="44" height="44" viewBox="0 0 24 24" fill="#073D35" stroke="#C8A75A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M20 10.3333C20 15.8571 12 22 12 22C12 22 4 15.8571 4 10.3333C4 8.21015 4.84285 6.17387 6.34315 4.67357C7.84344 3.17327 9.87971 2.33333 12 2.33333C14.1203 2.33333 16.1566 3.17327 17.6569 4.67357C19.1571 6.17387 20 8.21015 20 10.3333Z"></path>
-        <circle cx="12" cy="10" r="3.5" fill="#C8A75A" stroke="none"></circle>
-      </svg>
-      <div class="w-4 h-1.5 bg-black/20 blur-[2px] rounded-full mt-[-6px]"></div>
-    </div>
-  `,
-  iconSize: [44, 44],
-  iconAnchor: [22, 40],
-  popupAnchor: [0, -40],
-});
+// قاموس الألوان الهادئة حسب نوع الفعالية
+const EVENT_COLORS: Record<string, string> = {
+  "وقفة احتجاجية": "#ef4444",    // أحمر هادئ
+  "ندوة ثقافية": "#3b82f6",      // أزرق احترافي
+  "توزيع مساعدات": "#10b981",    // أخضر مريح
+  "نشاط رياضي": "#f59e0b",       // برتقالي دافئ
+  "مبادرة تطوعية": "#8b5cf6",    // بنفسجي لطيف
+  "اجتماع عام": "#6366f1",       // نيلي
+  "أخرى": "#073D35",             // اللون الأساسي للمنصة
+};
+
+// دالة لتوليد الدبوس الفخم بلون ديناميكي
+const createElegantIcon = (color: string) => {
+  return L.divIcon({
+    className: 'bg-transparent border-0',
+    html: `
+      <div class="relative flex flex-col items-center justify-center drop-shadow-lg transition-transform hover:scale-110">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="${color}" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 21s-8-7.333-8-11.5C4 5.806 7.582 2.5 12 2.5s8 3.306 8 8c0 4.167-8 11.5-8 11.5Z" stroke="white" stroke-width="1.2" />
+          <circle cx="12" cy="10.5" r="3" fill="white" />
+        </svg>
+        <div class="w-3 h-1 bg-black/10 blur-[1.5px] rounded-full mt-[-4px]"></div>
+      </div>
+    `,
+    iconSize: [40, 40],
+    iconAnchor: [20, 38],
+    popupAnchor: [0, -35],
+  });
+};
 
 interface EventMapData {
   id: string;
@@ -55,12 +68,10 @@ export default function EventsMap({ events, center, zoom }: EventsMapProps) {
     ? "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=ar" 
     : "https://mt1.google.com/vt/lyrs=y,h&x={x}&y={y}&z={z}&hl=ar";
 
-  const handleZoomIn = () => mapRef.current?.zoomIn();
-  const handleZoomOut = () => mapRef.current?.zoomOut();
-
   return (
     <div className="relative w-full h-full rounded-[1.5rem] overflow-hidden z-0">
-      <div className="absolute top-4 left-4 z-[1000] flex bg-white/95 backdrop-blur-md p-1.5 rounded-xl shadow-lg border border-gray-200">
+      {/* التحكم بنوع الخريطة */}
+      <div className="absolute top-4 left-4 z-[1000] flex bg-white/95 backdrop-blur-md p-1 rounded-xl shadow-lg border border-gray-200">
         <button 
           onClick={() => setMapType('satellite')} 
           className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg transition-all ${mapType === 'satellite' ? 'bg-[#073D35] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
@@ -75,9 +86,10 @@ export default function EventsMap({ events, center, zoom }: EventsMapProps) {
         </button>
       </div>
 
+      {/* أزرار التقريب */}
       <div className="absolute bottom-6 left-4 z-[1000] flex flex-col bg-white/95 backdrop-blur-md rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-        <button onClick={handleZoomIn} className="p-2.5 hover:bg-gray-100 text-[#073D35] border-b border-gray-100 transition-colors"><Plus className="w-5 h-5"/></button>
-        <button onClick={handleZoomOut} className="p-2.5 hover:bg-gray-100 text-[#073D35] transition-colors"><Minus className="w-5 h-5"/></button>
+        <button onClick={() => mapRef.current?.zoomIn()} className="p-2.5 hover:bg-gray-100 text-[#073D35] border-b border-gray-100"><Plus className="w-5 h-5"/></button>
+        <button onClick={() => mapRef.current?.zoomOut()} className="p-2.5 hover:bg-gray-100 text-[#073D35]"><Minus className="w-5 h-5"/></button>
       </div>
 
       <MapContainer 
@@ -91,42 +103,49 @@ export default function EventsMap({ events, center, zoom }: EventsMapProps) {
         <TileLayer url={tileUrl} />
         <MapUpdater center={center} zoom={zoom} />
         
-        {events.map((event) => (
-          <Marker key={event.id} position={event.coordinates} icon={elegantIcon}>
-            <Popup className="custom-popup" closeButton={false}>
-              <div className="p-4 w-64 arabic-premium-text" dir="rtl">
-                <div className="flex justify-between items-start mb-3">
-                  <span className="text-[10px] font-bold text-[#073D35] bg-[#073D35]/10 px-2.5 py-1 rounded-md border border-[#073D35]/10">
-                    {event.type}
-                  </span>
+        {events.map((event) => {
+          const eventColor = EVENT_COLORS[event.type] || EVENT_COLORS["أخرى"];
+          const dynamicIcon = createElegantIcon(eventColor);
+
+          return (
+            <Marker key={event.id} position={event.coordinates} icon={dynamicIcon}>
+              <Popup className="custom-popup" closeButton={false}>
+                <div className="p-4 w-64 arabic-premium-text" dir="rtl">
+                  <div className="flex justify-between items-start mb-3">
+                    <span 
+                      style={{ color: eventColor, backgroundColor: `${eventColor}15`, borderColor: `${eventColor}30` }}
+                      className="text-[10px] font-bold px-2.5 py-1 rounded-md border"
+                    >
+                      {event.type}
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-gray-900 text-sm leading-tight mb-3">
+                    {event.title}
+                  </h3>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2 text-xs text-gray-600 font-medium">
+                      <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="truncate">{event.location}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-600 font-medium">
+                      <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="font-sans" dir="ltr">{event.date}</span>
+                    </div>
+                  </div>
+                  
+                  {/* الزر الديناميكي الملون بنص أبيض */}
+                  <Link 
+                    href={`/events/${event.id}`}
+                    style={{ backgroundColor: eventColor }}
+                    className="w-full flex items-center justify-center gap-2 text-white py-2.5 rounded-xl text-xs font-bold transition-all shadow-md hover:brightness-90 active:scale-[0.98]"
+                  >
+                    التفاصيل والمشاركة <ArrowUpLeft className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
-                <h3 className="font-bold text-gray-900 text-sm leading-tight mb-3">
-                  {event.title}
-                </h3>
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-xs text-gray-600">
-                    <MapPin className="w-3.5 h-3.5 text-[#C8A75A] shrink-0" />
-                    <span className="truncate">{event.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-600">
-                    <Calendar className="w-3.5 h-3.5 text-[#C8A75A]" />
-                    <span className="font-sans" dir="ltr">{event.date}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-600">
-                    <Clock className="w-3.5 h-3.5 text-[#C8A75A]" />
-                    <span className="font-sans" dir="ltr">{event.time}</span>
-                  </div>
-                </div>
-                <Link 
-                  href={`/events/${event.id}`}
-                  className="w-full flex items-center justify-center gap-2 bg-[#073D35] hover:bg-[#052e28] text-white py-2.5 rounded-xl text-xs font-bold transition-all shadow-md shadow-[#073D35]/20"
-                >
-                  التفاصيل والمشاركة <ArrowUpLeft className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
     </div>
   );
