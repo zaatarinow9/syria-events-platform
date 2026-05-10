@@ -6,6 +6,7 @@ import L from "leaflet";
 import { MapPin, Calendar, Clock, Globe, Map as MapIcon, Plus, Minus, ArrowUpLeft } from "lucide-react";
 import Link from "next/link";
 
+// قائمة الألوان الزاهية والمريحة للعين
 const EVENT_COLORS = [
   "#073D35", 
   "#C8A75A", 
@@ -19,20 +20,21 @@ const EVENT_COLORS = [
   "#84cc16"  
 ];
 
+// دبوس مودرن احترافي ومسطح (Flat Design) بدون أي ظلال مزعجة
 const createElegantIcon = (color: string) => {
   return L.divIcon({
     className: 'bg-transparent border-0',
     html: `
       <div class="relative flex flex-col items-center justify-center transition-transform hover:scale-110">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="${color}" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 6px 8px rgba(0,0,0,0.4));">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z" stroke="white" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-          <circle cx="12" cy="9" r="3.5" fill="white" />
+        <svg width="36" height="46" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 0C5.37258 0 0 5.37258 0 12C0 22 12 32 12 32C12 32 24 22 24 12C24 5.37258 18.6274 0 12 0Z" fill="${color}"/>
+          <circle cx="12" cy="12" r="5" fill="white" />
         </svg>
       </div>
     `,
-    iconSize: [48, 48],
-    iconAnchor: [24, 46],
-    popupAnchor: [0, -42],
+    iconSize: [36, 46],
+    iconAnchor: [18, 46],
+    popupAnchor: [0, -40],
   });
 };
 
@@ -131,12 +133,14 @@ export default function EventsMap({ events, center, zoom }: EventsMapProps) {
                     </div>
                   </div>
                   
+                  {/* الزر باللون الأبيض الإجباري */}
                   <Link 
                     href={`/events/${event.id}`}
-                    style={{ backgroundColor: eventColor }}
-                    className="w-full flex items-center justify-center gap-2 text-white py-2.5 rounded-xl text-xs font-bold transition-all shadow-md hover:brightness-90 active:scale-[0.98]"
+                    style={{ backgroundColor: eventColor, color: '#ffffff' }}
+                    className="w-full flex items-center justify-center gap-2 !text-white py-2.5 rounded-xl text-xs font-bold transition-all shadow-md hover:brightness-90 active:scale-[0.98] no-underline"
                   >
-                    التفاصيل والمشاركة <ArrowUpLeft className="w-3.5 h-3.5 text-white" />
+                    <span>التفاصيل والمشاركة</span>
+                    <ArrowUpLeft className="w-3.5 h-3.5 !text-white" />
                   </Link>
                 </div>
               </Popup>
