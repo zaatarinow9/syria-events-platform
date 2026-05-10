@@ -38,7 +38,7 @@ export function Header() {
         
         {/* الشعار الرسمي والثابت */}
         <Link href="/" className="flex items-center gap-3">
-          <div className="relative w-28 h-12 md:w-36 md:h-14">
+          <div className="relative w-24 h-10 md:w-32 md:h-12">
             <Image
               src="/logo.png"
               alt="وينكم؟"
