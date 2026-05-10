@@ -1,87 +1,252 @@
-// ID: ADMIN_DETAILS_GEO_REVIEW
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import StatusBadge from "@/components/admin/StatusBadge";
 import RequestActions from "@/components/admin/RequestActions";
-import { ArrowRight, User, Calendar, MapPin, Users, FileCheck, Clock, Building2, Trophy, Navigation } from "lucide-react";
+import {
+  ArrowRight,
+  Calendar,
+  MapPin,
+  Users,
+  FileCheck,
+  Clock,
+  Trophy,
+  Navigation,
+} from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import LocationPickerWrapper from "@/components/shared/LocationPickerWrapper";
 
-const LocationPicker = dynamic(() => import("@/components/shared/LocationPicker"), { ssr: false });
-
-export default async function RequestDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function RequestDetailsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: request, error } = await supabase.from("permit_requests").select("*").eq("id", id).single();
+  const { data: request, error } = await supabase
+    .from("permit_requests")
+    .select("*")
+    .eq("id", id)
+    .single();
+
   if (error || !request) return notFound();
 
   const approvalDocs = request.approval_documents || [];
-  const imageUrls = approvalDocs.map((path: string) => path.startsWith('http') ? path : supabase.storage.from("request-files").getPublicUrl(path).data.publicUrl);
 
-  // الرابط الدقيق المضمون
-  const mapsLink = request.latitude && request.longitude 
-    ? `https://www.google.com/maps?q=${request.latitude},${request.longitude}`
-    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(request.governorate + " " + request.location)}`;
+  const imageUrls = approvalDocs.map((path: string) => {
+    if (path.startsWith("http")) return path;
+    return supabase.storage.from("request-files").getPublicUrl(path).data.publicUrl;
+  });
+
+  const mapsLink =
+    request.latitude && request.longitude
+      ? `https://www.google.com/maps/dir/?api=1&destination=${request.latitude},${request.longitude}`
+      : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+          `${request.location || ""} ${request.governorate || ""}`
+        )}`;
 
   return (
     <div dir="rtl" className="space-y-8 pb-20">
-      <div className="flex justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <Link href="/admin/requests" className="flex items-center gap-2 text-gray-500 font-bold mb-4"><ArrowRight className="w-4 h-4" /> العودة للطلبات</Link>
-          <div className="flex gap-4"><h1 className="text-3xl font-bold">{request.event_title}</h1><StatusBadge status={request.status} /></div>
+          <Link
+            href="/admin/requests"
+            className="flex items-center gap-2 text-gray-500 hover:text-[#073D35] mb-4 font-bold"
+          >
+            <ArrowRight className="w-4 h-4" />
+            العودة للطلبات
+          </Link>
+
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold text-gray-900">
+              {request.event_title}
+            </h1>
+            <StatusBadge status={request.status} />
+          </div>
+
+          <p className="text-gray-500 mt-1 font-medium">
+            رقم المرجع:{" "}
+            <span className="font-mono text-[#C8A75A] font-bold">
+              {request.request_number}
+            </span>
+          </p>
         </div>
-        <RequestActions requestId={request.id} currentStatus={request.status} isPublic={request.is_public} />
+
+        <RequestActions
+          requestId={request.id}
+          currentStatus={request.status}
+          isPublic={request.is_public}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-          <section className="bg-white rounded-[2rem] border p-8">
-            <h2 className="text-xl font-bold text-[#073D35] mb-6 flex gap-2 border-b pb-4"><Trophy className="w-5 h-5 text-[#C8A75A]" /> تفاصيل الفعالية</h2>
+          <section className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8">
+            <h2 className="text-xl font-bold text-[#073D35] mb-6 flex items-center gap-2 border-b pb-4">
+              <Trophy className="w-5 h-5 text-[#C8A75A]" />
+              تفاصيل الفعالية
+            </h2>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6">
-              <InfoItem icon={Calendar} label="تاريخ الفعالية" value={format(new Date(request.event_date), "dd MMMM yyyy", { locale: ar })} />
-              <InfoItem icon={Clock} label="التوقيت" value={`من ${request.start_time} إلى ${request.end_time}`} />
-              <InfoItem icon={MapPin} label="المحافظة" value={`${request.governorate} - ${request.city}`} />
-              <InfoItem icon={Users} label="العدد المتوقع" value={`${request.expected_attendees} شخص`} />
+              <InfoItem
+                icon={Calendar}
+                label="تاريخ الفعالية"
+                value={format(new Date(request.event_date), "dd MMMM yyyy", {
+                  locale: ar,
+                })}
+              />
+
+              <InfoItem
+                icon={Clock}
+                label="التوقيت"
+                value={`من ${request.start_time} إلى ${request.end_time}`}
+              />
+
+              <InfoItem
+                icon={MapPin}
+                label="الموقع والنطاق"
+                value={`${request.governorate} - ${request.city}`}
+              />
+
+              <InfoItem
+                icon={Users}
+                label="العدد المتوقع"
+                value={`${request.expected_attendees} شخص`}
+              />
+
+              <InfoItem
+                icon={FileCheck}
+                label="نوع الفعالية"
+                value={request.event_type}
+              />
+
+              <div className="flex items-start gap-3 md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <div className="p-2 bg-[#073D35]/10 rounded-lg">
+                  <MapPin className="w-5 h-5 text-[#073D35]" />
+                </div>
+
+                <div className="w-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <p className="text-xs font-bold text-gray-400">
+                      مكان التجمع الدقيق
+                    </p>
+
+                    <a
+                      href={mapsLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 bg-[#073D35] hover:bg-[#052e28] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm"
+                    >
+                      <Navigation className="w-3.5 h-3.5" />
+                      فتح في خرائط جوجل
+                    </a>
+                  </div>
+
+                  <p className="text-sm font-bold text-gray-800 mb-4">
+                    {request.location}
+                  </p>
+
+                  {request.latitude && request.longitude ? (
+                    <div className="pointer-events-none opacity-90 h-[250px] w-full overflow-hidden rounded-xl border border-gray-200">
+                      <LocationPickerWrapper
+                        defaultLat={Number(request.latitude)}
+                        defaultLng={Number(request.longitude)}
+                        readOnly={true}
+                      />
+                    </div>
+                  ) : (
+                    <div className="bg-yellow-50 text-yellow-700 p-3 rounded-lg border border-yellow-200 text-sm font-bold">
+                      مقدم الطلب لم يقم بتحديد موقع دقيق على الخريطة.
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div className="mt-8 border border-gray-200 rounded-xl p-6 bg-gray-50">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-lg">مكان التجمع الدقيق (الدبوس)</h3>
-                <a href={mapsLink} target="_blank" className="flex items-center gap-2 bg-[#073D35] text-white px-4 py-2 rounded-lg text-sm font-bold"><Navigation className="w-4 h-4"/> فتح الخرائط</a>
-              </div>
-              <p className="text-gray-700 font-medium mb-4">الوصف النصي: {request.location}</p>
-              {request.latitude && request.longitude ? (
-                <div className="pointer-events-none opacity-80 h-[250px] overflow-hidden rounded-xl">
-                  <LocationPicker onLocationSelect={() => {}} defaultLat={request.latitude} defaultLng={request.longitude} readOnly={true} />
-                </div>
-              ) : (
-                <p className="text-red-500 font-bold text-sm">المستخدم لم يحدد الموقع على الخريطة.</p>
-              )}
+            <div className="mt-8 pt-6 border-t border-gray-50">
+              <h3 className="font-bold text-gray-900 mb-2">الهدف:</h3>
+              <p className="text-gray-600 leading-relaxed">
+                {request.event_goal}
+              </p>
             </div>
-            
-            <div className="mt-8 pt-6 border-t"><h3 className="font-bold mb-2">الهدف:</h3><p>{request.event_goal}</p></div>
+
+            {request.route && (
+              <div className="mt-4 pt-4 border-t border-gray-50">
+                <h3 className="font-bold text-gray-900 mb-2">خط السير:</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {request.route}
+                </p>
+              </div>
+            )}
           </section>
 
-          <section className="bg-white rounded-[2rem] border p-8">
-            <h2 className="text-xl font-bold mb-6 border-b pb-4">الوثائق المرفوعة</h2>
+          <section className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8">
+            <h2 className="text-xl font-bold text-[#073D35] mb-6 border-b pb-4">
+              الوثائق المرفوعة
+            </h2>
+
             {imageUrls.length > 0 ? (
-              <div className="grid grid-cols-3 gap-4">
-                {imageUrls.map((url: string, i: number) => <a key={i} href={url} target="_blank" className="aspect-[3/4] block bg-gray-100 rounded-xl overflow-hidden border"><img src={url} className="w-full h-full object-cover"/></a>)}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {imageUrls.map((url: string, idx: number) => (
+                  <a
+                    key={idx}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative group block aspect-[3/4] overflow-hidden rounded-2xl border border-gray-200"
+                  >
+                    <img
+                      src={url}
+                      alt={`وثيقة ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-bold transition-opacity">
+                      فتح الوثيقة
+                    </div>
+                  </a>
+                ))}
               </div>
-            ) : <div className="py-12 text-center text-gray-400 font-bold border-2 border-dashed rounded-xl">لا توجد وثائق</div>}
+            ) : (
+              <div className="py-12 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 text-gray-400 font-bold">
+                لا توجد وثائق بعد
+              </div>
+            )}
           </section>
         </div>
 
         <div className="space-y-8">
-          <section className="bg-white rounded-[2rem] border p-8">
-            <h2 className="font-bold text-[#073D35] mb-6 border-b pb-4">مقدم الطلب</h2>
+          <section className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8">
+            <h2 className="text-lg font-bold text-[#073D35] mb-6 border-b pb-4">
+              مقدم الطلب
+            </h2>
+
             <div className="space-y-4 font-bold">
-              <p className="text-gray-500 text-sm">الاسم: <span className="text-gray-900">{request.full_name}</span></p>
-              <p className="text-gray-500 text-sm">الهاتف: <span className="text-gray-900" dir="ltr">{request.phone}</span></p>
-              <p className="text-gray-500 text-sm">الإيميل: <span className="text-gray-900">{request.email}</span></p>
+              <p className="text-sm text-gray-500">
+                الاسم:{" "}
+                <span className="text-gray-900">{request.full_name}</span>
+              </p>
+
+              <p className="text-sm text-gray-500">
+                الهاتف:{" "}
+                <span className="text-gray-900" dir="ltr">
+                  {request.phone}
+                </span>
+              </p>
+
+              <p className="text-sm text-gray-500">
+                الإيميل:{" "}
+                <span className="text-gray-900">{request.email}</span>
+              </p>
+
+              <p className="text-sm text-gray-500">
+                الجهة:{" "}
+                <span className="text-gray-900">
+                  {request.organization_name || "شخصي"}
+                </span>
+              </p>
             </div>
           </section>
         </div>
@@ -90,8 +255,25 @@ export default async function RequestDetailsPage({ params }: { params: Promise<{
   );
 }
 
-function InfoItem({ icon: Icon, label, value }: any) {
+function InfoItem({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: any;
+  label: string;
+  value: string | number;
+}) {
   return (
-    <div className="flex gap-3"><div className="p-2 bg-[#073D35]/5 rounded-lg"><Icon className="w-4 h-4 text-[#073D35]" /></div><div><p className="text-xs font-bold text-gray-400">{label}</p><p className="text-sm font-bold text-gray-800">{value}</p></div></div>
+    <div className="flex items-start gap-3">
+      <div className="p-2 bg-[#073D35]/5 rounded-lg">
+        <Icon className="w-4 h-4 text-[#073D35]" />
+      </div>
+
+      <div>
+        <p className="text-xs font-bold text-gray-400 mb-0.5">{label}</p>
+        <p className="text-sm font-bold text-gray-800">{value}</p>
+      </div>
+    </div>
   );
 }

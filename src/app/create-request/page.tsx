@@ -26,10 +26,9 @@ import {
 import { GOVERNORATES } from "@/lib/constants/governorates";
 import { EVENT_TYPES } from "@/lib/constants/eventTypes";
 
-// استدعاء الخريطة بشكل ديناميكي لتجنب أخطاء السيرفر
 const LocationPicker = dynamic(() => import("@/components/shared/LocationPicker"), { 
   ssr: false,
-  loading: () => <div className="h-[300px] w-full bg-gray-50 animate-pulse rounded-xl border border-gray-100 flex items-center justify-center">جاري تحميل الخريطة...</div>
+  loading: () => <div className="h-[300px] w-full bg-gray-50 animate-pulse rounded-xl border border-gray-100 flex items-center justify-center font-bold text-gray-400">جاري تحميل الخريطة...</div>
 });
 
 const pledges: Array<{ name: PledgeFieldName; text: string }> = [
@@ -54,30 +53,26 @@ export default function CreateRequestPage() {
   const [requestNumber, setRequestNumber] = useState("");
   const [formData, setFormData] = useState<PermitRequestFormValues | null>(null);
   
-  // حالة لحفظ الإحداثيات من الخريطة
-  const [coordinates, setCoordinates] = useState({ lat: 34.8, lng: 38.0 });
+  const [mapCoordinates, setMapCoordinates] = useState({ lat: 34.8, lng: 38.0 });
 
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<PermitRequestFormValues>({
     resolver: zodResolver(permitRequestSchema),
   });
 
-  const handleLocationSelect = (lat: number, lng: number, address: string) => {
-    setCoordinates({ lat, lng });
-    // يمكننا وضع العنوان المقترح في حقل الموقع إذا كان فارغاً
+  const handleLocationSelect = (lat: number, lng: number) => {
+    setMapCoordinates({ lat, lng });
   };
 
   const onSubmit = async (data: PermitRequestFormValues) => {
     try {
-      // دمج الإحداثيات مع البيانات المرسلة
       const payload = {
         ...data,
-        latitude: coordinates.lat,
-        longitude: coordinates.lng
+        latitude: mapCoordinates.lat,
+        longitude: mapCoordinates.lng
       };
 
       const response = await fetch("/api/requests/create", {
@@ -278,7 +273,7 @@ export default function CreateRequestPage() {
             <FileText className="h-4 w-4" /> نموذج إلكتروني
           </div>
           <h1 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">إنشاء طلب ترخيص فعالية</h1>
-          <p className="max-w-xl text-gray-500 font-medium">يرجى تعبئة البيانات التالية بدقة. سيقوم النظام بتنسيقها في مستند PDF رسمي جاهز للطباعة والتقديم المباشر للجهات المعنية.</p>
+          <p className="max-w-xl text-gray-500 font-medium">يرجى تعبئة البيانات التالية بدقة، وتحديد الموقع على الخريطة لتسهيل وصول المشاركين.</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
@@ -289,27 +284,27 @@ export default function CreateRequestPage() {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">الاسم الكامل *</label>
-                <input type="text" {...register("fullName")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="الاسم الثلاثي" />
+                <input type="text" {...register("fullName")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] font-medium" placeholder="الاسم الثلاثي" />
                 <InputError error={errors.fullName?.message} />
               </div>
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">البريد الإلكتروني *</label>
-                <input type="email" {...register("email")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="example@domain.com" dir="ltr" />
+                <input type="email" {...register("email")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left outline-none transition-all focus:border-[#C8A75A] font-medium" placeholder="example@domain.com" dir="ltr" />
                 <InputError error={errors.email?.message} />
               </div>
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">رقم الهاتف *</label>
-                <input type="tel" {...register("phone")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="09xxxxxx" dir="ltr" />
+                <input type="tel" {...register("phone")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left outline-none transition-all focus:border-[#C8A75A] font-medium" placeholder="09xxxxxx" dir="ltr" />
                 <InputError error={errors.phone?.message} />
               </div>
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">الصفة في التنظيم *</label>
-                <input type="text" {...register("submitterRole")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="مثال: رئيس اللجنة، منسق..." />
+                <input type="text" {...register("submitterRole")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] font-medium" placeholder="مثال: رئيس اللجنة، منسق..." />
                 <InputError error={errors.submitterRole?.message} />
               </div>
               <div className="md:col-span-2">
                 <label className="mb-2 block text-sm font-bold text-gray-700">اسم الجهة المنظمة اختياري</label>
-                <input type="text" {...register("organizationName")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="إن وجدت جهة راعية أو منظمة" />
+                <input type="text" {...register("organizationName")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] font-medium" placeholder="إن وجدت جهة راعية أو منظمة" />
               </div>
             </div>
           </section>
@@ -321,12 +316,12 @@ export default function CreateRequestPage() {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="md:col-span-2">
                 <label className="mb-2 block text-sm font-bold text-gray-700">عنوان الفعالية *</label>
-                <input type="text" {...register("eventTitle")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="العنوان الرسمي الذي سيظهر في المستند" />
+                <input type="text" {...register("eventTitle")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] font-medium" placeholder="العنوان الرسمي الذي سيظهر في المستند" />
                 <InputError error={errors.eventTitle?.message} />
               </div>
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">نوع الفعالية *</label>
-                <select {...register("eventType")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium">
+                <select {...register("eventType")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] font-medium">
                   <option value="">اختر النوع...</option>
                   {EVENT_TYPES.map((type) => (<option key={type} value={type}>{type}</option>))}
                 </select>
@@ -334,60 +329,62 @@ export default function CreateRequestPage() {
               </div>
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">المحافظة *</label>
-                <select {...register("governorate")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium">
+                <select {...register("governorate")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] font-medium">
                   <option value="">اختر المحافظة...</option>
                   {GOVERNORATES.map((gov) => (<option key={gov} value={gov}>{gov}</option>))}
                 </select>
                 <InputError error={errors.governorate?.message} />
               </div>
-              <div>
-                <label className="mb-2 block text-sm font-bold text-gray-700">المدينة / المنطقة *</label>
-                <input type="text" {...register("city")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="الناحية أو المدينة" />
-                <InputError error={errors.city?.message} />
-              </div>
               
-              {/* قسم الخريطة الجديد */}
-              <div className="md:col-span-2 border border-[#C8A75A]/20 bg-[#FDFBF7] p-5 rounded-2xl my-4">
-                <h3 className="text-md font-bold text-[#073D35] mb-3 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-[#C8A75A]"/> تحديد الموقع على الخريطة (لتسهيل الوصول)
-                </h3>
-                <p className="text-xs text-gray-500 mb-4 font-medium">يرجى البحث عن الموقع أو سحب الخريطة والنقر لتحديد مكان الفعالية بدقة لتسهيل وصول المشاركين إليه.</p>
+              {/* قسم الخريطة التفاعلية */}
+              <div className="md:col-span-2 bg-[#FDFBF7] p-5 rounded-2xl border border-[#C8A75A]/30 mt-4 mb-2 shadow-sm">
+                <div className="mb-4">
+                  <h3 className="font-bold text-[#073D35] flex items-center gap-2 mb-1">
+                    <MapPin className="w-5 h-5 text-[#C8A75A]" /> تحديد الموقع الدقيق (إلزامي للخرائط)
+                  </h3>
+                  <p className="text-xs text-gray-500 font-medium">اسحب الدبوس بيدك وضعه في مكان التجمع الدقيق ليتمكن المشاركون من الوصول إليه عبر Google Maps.</p>
+                </div>
                 <LocationPicker onLocationSelect={handleLocationSelect} defaultLat={34.8} defaultLng={38.0} />
               </div>
 
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-bold text-gray-700">مكان التجمع الدقيق (الوصف النصي) *</label>
-                <input type="text" {...register("location")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="الساحة، الحديقة، المركز..." />
+              <div>
+                <label className="mb-2 block text-sm font-bold text-gray-700">المدينة / المنطقة *</label>
+                <input type="text" {...register("city")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] font-medium" placeholder="الناحية أو المدينة" />
+                <InputError error={errors.city?.message} />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-bold text-gray-700">مكان التجمع (وصف نصي) *</label>
+                <input type="text" {...register("location")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] font-medium" placeholder="الساحة، الحديقة، المركز..." />
                 <InputError error={errors.location?.message} />
               </div>
               
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">تاريخ الفعالية *</label>
-                <input type="date" {...register("eventDate")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" />
+                <input type="date" {...register("eventDate")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] font-medium" />
                 <InputError error={errors.eventDate?.message} />
               </div>
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">العدد المتوقع للحضور *</label>
-                <input type="number" min={1} {...register("expectedAttendees", { valueAsNumber: true })} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="رقم تقريبي" />
+                <input type="number" min={1} {...register("expectedAttendees", { valueAsNumber: true })} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] font-medium" placeholder="رقم تقريبي" />
                 <InputError error={errors.expectedAttendees?.message} />
               </div>
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">وقت البداية *</label>
-                <input type="time" {...register("startTime")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" />
+                <input type="time" {...register("startTime")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] font-medium" />
                 <InputError error={errors.startTime?.message} />
               </div>
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">وقت النهاية *</label>
-                <input type="time" {...register("endTime")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" />
+                <input type="time" {...register("endTime")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] font-medium" />
                 <InputError error={errors.endTime?.message} />
               </div>
               <div className="md:col-span-2">
                 <label className="mb-2 block text-sm font-bold text-gray-700">خط السير اختياري</label>
-                <textarea {...register("route")} rows={2} className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="اكتب خط السير إن وجد..." />
+                <textarea {...register("route")} rows={2} className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] font-medium" placeholder="اكتب خط السير إن وجد..." />
               </div>
               <div className="md:col-span-2">
                 <label className="mb-2 block text-sm font-bold text-gray-700">هدف الفعالية *</label>
-                <textarea {...register("eventGoal")} rows={3} className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] focus:ring-2 focus:ring-[#C8A75A]/50 font-medium" placeholder="اشرح الهدف بشكل رسمي وواضح لتقديمه في الطلب..." />
+                <textarea {...register("eventGoal")} rows={3} className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 outline-none transition-all focus:border-[#C8A75A] font-medium" placeholder="اشرح الهدف بشكل رسمي وواضح لتقديمه في الطلب..." />
                 <InputError error={errors.eventGoal?.message} />
               </div>
             </div>
