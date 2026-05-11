@@ -12,9 +12,8 @@ import {
   Clock,
   Trophy,
   Navigation,
+  Image as ImageIcon
 } from "lucide-react";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
 import LocationPickerWrapper from "@/components/shared/LocationPickerWrapper";
 
 export default async function RequestDetailsPage({
@@ -40,12 +39,25 @@ export default async function RequestDetailsPage({
     return supabase.storage.from("request-files").getPublicUrl(path).data.publicUrl;
   });
 
+  // معالجة رابط الشعار المرفوع (إن وجد)
+  let campaignLogoUrl = null;
+  if (request.campaign_image) {
+    if (request.campaign_image.startsWith("http")) {
+      campaignLogoUrl = request.campaign_image;
+    } else {
+      campaignLogoUrl = supabase.storage.from("request-files").getPublicUrl(request.campaign_image).data.publicUrl;
+    }
+  }
+
   const mapsLink =
     request.latitude && request.longitude
-      ? `https://www.google.com/maps/dir/?api=1&destination=${request.latitude},${request.longitude}`
-      : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+      ? `https://www.google.com/maps/dir/?api=1&destination=$${request.latitude},${request.longitude}`
+      : `https://www.google.com/maps/dir/?api=1&destination=$${encodeURIComponent(
           `${request.location || ""} ${request.governorate || ""}`
         )}`;
+
+  // استخدام الصيغة الصحيحة للأرقام الإنجليزية
+  const formattedDate = new Date(request.event_date).toLocaleDateString('ar-SY-u-nu-latn', { day: '2-digit', month: 'long', year: 'numeric' });
 
   return (
     <div dir="rtl" className="space-y-8 pb-20">
@@ -68,7 +80,7 @@ export default async function RequestDetailsPage({
 
           <p className="text-gray-500 mt-1 font-medium">
             رقم المرجع:{" "}
-            <span className="font-mono text-[#C8A75A] font-bold">
+            <span className="font-mono text-[#C8A75A] font-bold" dir="ltr">
               {request.request_number}
             </span>
           </p>
@@ -83,6 +95,31 @@ export default async function RequestDetailsPage({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
+          
+          {/* قسم شعار الحملة (يظهر فقط إذا قام المستخدم برفعه) */}
+          {campaignLogoUrl && (
+            <section className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 flex flex-col sm:flex-row items-center gap-6">
+              <div className="w-full sm:w-1/3 h-40 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex-shrink-0 relative group">
+                <img 
+                  src={campaignLogoUrl} 
+                  alt="شعار الحملة" 
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                />
+                <a href={campaignLogoUrl} target="_blank" rel="noopener noreferrer" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-bold transition-all text-sm">
+                  تكبير الصورة
+                </a>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[#073D35] mb-2 flex items-center gap-2">
+                  <ImageIcon className="w-5 h-5 text-[#C8A75A]"/> شعار / صورة الفعالية المرفقة
+                </h3>
+                <p className="text-sm text-gray-600 font-medium leading-relaxed">
+                  هذه الصورة قام برفعها منظم الفعالية لتكون غلافاً رئيسياً للحملة عند عرضها للجمهور.
+                </p>
+              </div>
+            </section>
+          )}
+
           <section className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8">
             <h2 className="text-xl font-bold text-[#073D35] mb-6 flex items-center gap-2 border-b pb-4">
               <Trophy className="w-5 h-5 text-[#C8A75A]" />
@@ -93,15 +130,15 @@ export default async function RequestDetailsPage({
               <InfoItem
                 icon={Calendar}
                 label="تاريخ الفعالية"
-                value={format(new Date(request.event_date), "dd MMMM yyyy", {
-                  locale: ar,
-                })}
+                value={formattedDate}
+                isLTR
               />
 
               <InfoItem
                 icon={Clock}
                 label="التوقيت"
                 value={`من ${request.start_time} إلى ${request.end_time}`}
+                isLTR
               />
 
               <InfoItem
@@ -114,6 +151,7 @@ export default async function RequestDetailsPage({
                 icon={Users}
                 label="العدد المتوقع"
                 value={`${request.expected_attendees} شخص`}
+                isLTR
               />
 
               <InfoItem
@@ -122,7 +160,7 @@ export default async function RequestDetailsPage({
                 value={request.event_type}
               />
 
-              <div className="flex items-start gap-3 md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <div className="flex items-start gap-3 md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-100 mt-2">
                 <div className="p-2 bg-[#073D35]/10 rounded-lg">
                   <MapPin className="w-5 h-5 text-[#073D35]" />
                 </div>
@@ -167,7 +205,7 @@ export default async function RequestDetailsPage({
 
             <div className="mt-8 pt-6 border-t border-gray-50">
               <h3 className="font-bold text-gray-900 mb-2">الهدف:</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-gray-600 leading-relaxed whitespace-pre-wrap break-words">
                 {request.event_goal}
               </p>
             </div>
@@ -175,7 +213,7 @@ export default async function RequestDetailsPage({
             {request.route && (
               <div className="mt-4 pt-4 border-t border-gray-50">
                 <h3 className="font-bold text-gray-900 mb-2">خط السير:</h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 leading-relaxed whitespace-pre-wrap break-words">
                   {request.route}
                 </p>
               </div>
@@ -184,7 +222,7 @@ export default async function RequestDetailsPage({
 
           <section className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8">
             <h2 className="text-xl font-bold text-[#073D35] mb-6 border-b pb-4">
-              الوثائق المرفوعة
+              الوثائق المرفوعة (الموافقات)
             </h2>
 
             {imageUrls.length > 0 ? (
@@ -200,18 +238,18 @@ export default async function RequestDetailsPage({
                     <img
                       src={url}
                       alt={`وثيقة ${idx + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     />
 
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-bold transition-opacity">
-                      فتح الوثيقة
+                      فتح الوثيقة للتكبير
                     </div>
                   </a>
                 ))}
               </div>
             ) : (
               <div className="py-12 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 text-gray-400 font-bold">
-                لا توجد وثائق بعد
+                لا توجد وثائق بعد. (ينتظر أن يقوم المنظم برفع الموافقة).
               </div>
             )}
           </section>
@@ -220,33 +258,32 @@ export default async function RequestDetailsPage({
         <div className="space-y-8">
           <section className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8">
             <h2 className="text-lg font-bold text-[#073D35] mb-6 border-b pb-4">
-              مقدم الطلب
+              مقدم الطلب / اللجنة المنظمة
             </h2>
 
-            <div className="space-y-4 font-bold">
-              <p className="text-sm text-gray-500">
-                الاسم:{" "}
-                <span className="text-gray-900">{request.full_name}</span>
-              </p>
+            <div className="space-y-5">
+              <div>
+                <p className="text-xs text-gray-400 font-bold mb-1">الاسم الكامل</p>
+                <p className="text-sm font-bold text-gray-900">{request.full_name}</p>
+              </div>
 
-              <p className="text-sm text-gray-500">
-                الهاتف:{" "}
-                <span className="text-gray-900" dir="ltr">
-                  {request.phone}
-                </span>
-              </p>
+              <div>
+                <p className="text-xs text-gray-400 font-bold mb-1">رقم الهاتف</p>
+                <p className="text-sm font-bold text-gray-900 font-sans" dir="ltr">{request.phone}</p>
+              </div>
 
-              <p className="text-sm text-gray-500">
-                الإيميل:{" "}
-                <span className="text-gray-900">{request.email}</span>
-              </p>
+              <div>
+                <p className="text-xs text-gray-400 font-bold mb-1">البريد الإلكتروني</p>
+                <p className="text-sm font-bold text-gray-900 font-sans" dir="ltr">{request.email}</p>
+              </div>
 
-              <p className="text-sm text-gray-500">
-                الجهة:{" "}
-                <span className="text-gray-900">
-                  {request.organization_name || "شخصي"}
-                </span>
-              </p>
+              <div>
+                <p className="text-xs text-gray-400 font-bold mb-1">الصفة والتنظيم</p>
+                <p className="text-sm font-bold text-gray-900">
+                  {request.submitter_role} 
+                  {request.organization_name && ` (${request.organization_name})`}
+                </p>
+              </div>
             </div>
           </section>
         </div>
@@ -255,24 +292,29 @@ export default async function RequestDetailsPage({
   );
 }
 
+// دالة مساعدة لعرض العناصر بشكل موحد
 function InfoItem({
   icon: Icon,
   label,
   value,
+  isLTR = false
 }: {
   icon: any;
   label: string;
   value: string | number;
+  isLTR?: boolean;
 }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="p-2 bg-[#073D35]/5 rounded-lg">
-        <Icon className="w-4 h-4 text-[#073D35]" />
+      <div className="p-2 bg-[#073D35]/5 rounded-lg shrink-0">
+        <Icon className="w-5 h-5 text-[#073D35]" />
       </div>
 
       <div>
         <p className="text-xs font-bold text-gray-400 mb-0.5">{label}</p>
-        <p className="text-sm font-bold text-gray-800">{value}</p>
+        <p className={`text-sm font-bold text-gray-800 ${isLTR ? 'font-sans' : ''}`} dir={isLTR ? "ltr" : "rtl"}>
+          {value}
+        </p>
       </div>
     </div>
   );
