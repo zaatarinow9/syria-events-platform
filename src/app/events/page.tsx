@@ -11,7 +11,8 @@ import {
   ArrowLeft,
   SlidersHorizontal,
   X,
-  Loader2
+  Loader2,
+  Image as ImageIcon
 } from "lucide-react";
 
 // خريطة الإحداثيات الذكية للمحافظات
@@ -45,11 +46,11 @@ export default function EventsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGov, setSelectedGov] = useState("الكل");
   const [selectedType, setSelectedType] = useState("الكل");
+  const supabase = createClient();
 
   // جلب البيانات من Supabase
   useEffect(() => {
     const fetchEvents = async () => {
-      const supabase = createClient();
       const { data } = await supabase
         .from('permit_requests')
         .select('*')
@@ -57,23 +58,33 @@ export default function EventsPage() {
         .order('event_date', { ascending: true });
 
       if (data) {
-        const formatted = data.map((req: any) => ({
-          id: req.id,
-          title: req.event_title,
-          location: `${req.governorate} - ${req.city || req.location}`,
-          date: new Date(req.event_date).toLocaleDateString('ar-SY', { day: '2-digit', month: 'long', year: 'numeric' }),
-          isoDate: req.event_date,
-          time: `${req.start_time} - ${req.end_time}`,
-          type: req.event_type,
-          status: req.status,
-          coordinates: GOV_COORDINATES[req.governorate] || [34.8, 38.0]
-        }));
+        const formatted = data.map((req: any) => {
+          // استخراج مسار الصورة وتحويلها لرابط عام إن وجدت
+          let imageUrl = null;
+          if (req.campaign_image) {
+            const { data: publicUrlData } = supabase.storage.from("request-files").getPublicUrl(req.campaign_image);
+            imageUrl = publicUrlData.publicUrl;
+          }
+
+          return {
+            id: req.id,
+            title: req.event_title,
+            location: `${req.governorate} - ${req.city || req.location}`,
+            date: new Date(req.event_date).toLocaleDateString('ar-SY-u-nu-latn', { day: '2-digit', month: 'long', year: 'numeric' }),
+            isoDate: req.event_date,
+            time: `${req.start_time} - ${req.end_time}`,
+            type: req.event_type,
+            status: req.status,
+            coordinates: req.latitude && req.longitude ? [req.latitude, req.longitude] : (GOV_COORDINATES[req.governorate] || [34.8, 38.0]),
+            imageUrl: imageUrl
+          };
+        });
         setEvents(formatted);
       }
       setLoading(false);
     };
     fetchEvents();
-  }, []);
+  }, [supabase]);
 
   // استخراج المحافظات وأنواع الفعاليات تلقائياً للفلتر
   const governorates = useMemo(() => {
@@ -202,18 +213,49 @@ export default function EventsPage() {
                   className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 hover:border-[#073D35]/30 transition-all duration-300 flex flex-col relative"
                 >
                   {/* الشريط اللوني العلوي للحالة */}
-                  <div className={`h-1.5 w-full ${statusStyle.bg.replace('/10', '')} transition-colors group-hover:bg-[#C8A75A]`}></div>
+                  <div className={`h-1.5 w-full z-10 ${statusStyle.bg.replace('/10', '')} transition-colors group-hover:bg-[#C8A75A]`}></div>
                   
-                  <div className="p-6 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start mb-4">
-                      <span className="inline-block px-3 py-1.5 bg-[#F5F8F7] text-[#073D35] text-xs font-bold rounded-lg border border-[#E8F0EE]">
-                        {event.type}
-                      </span>
-                      <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border bg-white ${statusStyle.color} ${statusStyle.border}`}>
-                        <span className={`w-2 h-2 rounded-full ${statusStyle.pulse} ${statusStyle.pulse === 'bg-[#ef4444]' ? 'animate-pulse' : ''}`}></span>
-                        <span className="text-[10px] font-bold">{statusStyle.label}</span>
+                  {/* قسم الصورة إن وجدت */}
+                  {event.imageUrl && (
+                    <div className="relative h-40 w-full overflow-hidden bg-gray-100">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+                      <img 
+                        src={event.imageUrl} 
+                        alt={event.title} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      {/* الحالة تظهر فوق الصورة */}
+                      <div className="absolute top-4 right-4 z-20">
+                         <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border bg-white/90 backdrop-blur-sm ${statusStyle.color} ${statusStyle.border}`}>
+                          <span className={`w-2 h-2 rounded-full ${statusStyle.pulse} ${statusStyle.pulse === 'bg-[#ef4444]' ? 'animate-pulse' : ''}`}></span>
+                          <span className="text-[10px] font-bold">{statusStyle.label}</span>
+                        </div>
                       </div>
                     </div>
+                  )}
+                  
+                  <div className="p-6 flex-1 flex flex-col relative z-20 bg-white">
+                    {/* إذا لم تكن هناك صورة، نعرض الحالة هنا */}
+                    {!event.imageUrl && (
+                      <div className="flex justify-between items-start mb-4">
+                        <span className="inline-block px-3 py-1.5 bg-[#F5F8F7] text-[#073D35] text-xs font-bold rounded-lg border border-[#E8F0EE]">
+                          {event.type}
+                        </span>
+                        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border bg-white ${statusStyle.color} ${statusStyle.border}`}>
+                          <span className={`w-2 h-2 rounded-full ${statusStyle.pulse} ${statusStyle.pulse === 'bg-[#ef4444]' ? 'animate-pulse' : ''}`}></span>
+                          <span className="text-[10px] font-bold">{statusStyle.label}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* إذا كان هناك صورة، نعرض النوع فقط بدون الحالة لتجنب التكرار */}
+                    {event.imageUrl && (
+                       <div className="mb-3 mt-[-40px] z-30">
+                        <span className="inline-block px-3 py-1.5 bg-white text-[#073D35] text-xs font-bold rounded-lg shadow-sm border border-gray-100">
+                          {event.type}
+                        </span>
+                      </div>
+                    )}
                     
                     <h3 className="text-xl font-bold text-gray-900 mb-4 leading-snug group-hover:text-[#073D35] transition-colors">
                       {event.title}
