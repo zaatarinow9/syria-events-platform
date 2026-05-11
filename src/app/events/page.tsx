@@ -215,18 +215,18 @@ export default function EventsPage() {
                   {/* الشريط اللوني العلوي للحالة */}
                   <div className={`h-1.5 w-full z-10 ${statusStyle.bg.replace('/10', '')} transition-colors group-hover:bg-[#C8A75A]`}></div>
                   
-                  {/* قسم الصورة إن وجدت */}
+                  {/* قسم الصورة إن وجدت (تم إضافة التصميم الذكي للبوسترات) */}
                   {event.imageUrl && (
-                    <div className="relative h-40 w-full overflow-hidden bg-gray-100">
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+                    <div className="relative h-48 w-full overflow-hidden bg-gray-50 flex items-center justify-center">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10"></div>
                       <img 
                         src={event.imageUrl} 
                         alt={event.title} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                      {/* الحالة تظهر فوق الصورة */}
+                      {/* الحالة تظهر فوق الصورة مدمجة */}
                       <div className="absolute top-4 right-4 z-20">
-                         <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border bg-white/90 backdrop-blur-sm ${statusStyle.color} ${statusStyle.border}`}>
+                         <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border bg-white/95 backdrop-blur-sm shadow-sm ${statusStyle.color} ${statusStyle.border}`}>
                           <span className={`w-2 h-2 rounded-full ${statusStyle.pulse} ${statusStyle.pulse === 'bg-[#ef4444]' ? 'animate-pulse' : ''}`}></span>
                           <span className="text-[10px] font-bold">{statusStyle.label}</span>
                         </div>
@@ -248,7 +248,7 @@ export default function EventsPage() {
                       </div>
                     )}
 
-                    {/* إذا كان هناك صورة، نعرض النوع فقط بدون الحالة لتجنب التكرار */}
+                    {/* إذا كان هناك صورة، نعرض النوع فقط بشكل أنيق فوق الصورة */}
                     {event.imageUrl && (
                        <div className="mb-3 mt-[-40px] z-30">
                         <span className="inline-block px-3 py-1.5 bg-white text-[#073D35] text-xs font-bold rounded-lg shadow-sm border border-gray-100">
