@@ -1,3 +1,4 @@
+// ID: CREATE_REQUEST_PERFECT_PDF
 "use client";
 
 import { useState, useEffect } from "react";
@@ -96,8 +97,8 @@ export default function CreateRequestPage() {
     }
   };
 
-  // --- الحل الجذري لمشكلة تحميل الـ PDF ---
-  const handleDownloadPDF = async () => {
+  // --- الحل الجذري والعبقري لمشكلة الـ PDF ---
+  const handleDownloadPDF = () => {
     setIsDownloading(true);
     const element = document.getElementById("pdf-content-area");
     
@@ -107,33 +108,29 @@ export default function CreateRequestPage() {
     }
 
     const processPDF = () => {
-      // إظهار العنصر لكي تستطيع المكتبة قراءته
-      element.style.display = "block";
-      
-      // إعطاء المتصفح 300 جزء من الثانية لـ "رسم" العنصر والخطوط قبل تصويره
-      setTimeout(async () => {
-        try {
-          const opt = {
-            margin:       10,
-            filename:     `طلب-ترخيص-${requestNumber}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true, logging: false },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-          };
-          
-          await (window as any).html2pdf().set(opt).from(element).save();
-        } catch (error) {
-          console.error("PDF Error:", error);
-          alert("حدث خطأ أثناء إعداد الملف. يرجى المحاولة مرة أخرى.");
-        } finally {
-          // في جميع الأحوال (نجاح أو فشل) يجب إخفاء العنصر وإعادة الزر لحالته
-          element.style.display = "none";
-          setIsDownloading(false);
-        }
-      }, 300);
+      // إعطاء المتصفح لحظة صغيرة للتأكد من الخطوط قبل التصوير
+      setTimeout(() => {
+        const opt = {
+          margin:       10,
+          filename:     `طلب-ترخيص-${requestNumber}.pdf`,
+          image:        { type: 'jpeg', quality: 1 },
+          html2canvas:  { scale: 2, useCORS: true, windowWidth: 800 },
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        
+        (window as any).html2pdf().set(opt).from(element).save()
+          .then(() => {
+            setIsDownloading(false);
+          })
+          .catch((error: any) => {
+            console.error("PDF Error:", error);
+            alert("حدث خطأ أثناء تحميل الملف. يرجى المحاولة مرة أخرى.");
+            setIsDownloading(false);
+          });
+      }, 100);
     };
 
-    // تحميل المكتبة إذا لم تكن محملة مسبقاً
+    // تحميل المكتبة إذا لم تكن محملة، ثم تنفيذ العملية
     if (!(window as any).html2pdf) {
       const script = document.createElement("script");
       script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
@@ -150,19 +147,9 @@ export default function CreateRequestPage() {
 
   if (isSubmitted && formData) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] py-12 arabic-premium-text print-reset" dir="rtl">
-        <style jsx global>{`
-          .print-only { display: none; }
-          @media print {
-            .no-print { display: none !important; }
-            .print-reset { min-height: 0 !important; padding: 0 !important; background-color: white !important; }
-            .print-only { display: block !important; width: 100%; color: #000000 !important; background-color: #ffffff !important; padding: 10mm 15mm !important; box-sizing: border-box !important; }
-            body { background-color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0 !important; padding: 0 !important; }
-            @page { size: A4 portrait; margin: 0mm !important; }
-          }
-        `}</style>
-
-        <div className="container mx-auto max-w-3xl px-4 no-print">
+      // تم إضافة overflow-x-hidden لمنع ظهور سكرول أفقي بسبب الـ PDF المخفي
+      <div className="min-h-screen bg-[#F9FAFB] py-12 arabic-premium-text print-reset overflow-x-hidden relative" dir="rtl">
+        <div className="container mx-auto max-w-3xl px-4 no-print relative z-10">
           <div className="mb-8 rounded-3xl border border-gray-200 bg-white p-8 text-center shadow-lg md:p-12">
             <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-4 border-green-500/20 bg-green-500/10">
               <CheckCircle2 className="h-12 w-12 text-green-500" />
@@ -188,9 +175,11 @@ export default function CreateRequestPage() {
           </div>
         </div>
 
-        {/* تصميم الـ PDF المخفي لغرض التحميل المباشر فقط */}
-        <div style={{ display: 'none', position: 'absolute', left: '-9999px', top: '-9999px', zIndex: -100 }} id="pdf-content-area">
-          <div className="bg-white text-black text-right p-8 w-[210mm]" dir="rtl">
+        {/* تصميم الـ PDF المخفي لغرض التحميل المباشر فقط 
+            تم إعطاؤه opacity-0 وزد-إندكس سالب ليبقى مخفياً ولكنه قابل للتصوير!
+        */}
+        <div className="absolute top-0 right-0 w-full flex justify-center z-[-1000] opacity-0 pointer-events-none" aria-hidden="true">
+          <div id="pdf-content-area" className="bg-white text-black text-right p-8 w-[210mm] min-h-[297mm]" dir="rtl">
             <div className="mb-6 text-center border-b-[2px] border-black pb-4 pt-2">
               <h1 className="text-[16pt] font-bold underline decoration-2 underline-offset-4 mb-2">طلب ترخيص تجمع / فعالية مدنية</h1>
               <p className="text-[11pt] font-bold text-gray-800">نموذج تصريح رسمي مخصص للتقديم للجهات الإدارية المختصة</p>
