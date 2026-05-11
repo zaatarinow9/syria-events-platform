@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import { Search, Loader2, MapPin, Globe, Map as MapIcon, Plus, Minus } from "lucide-react";
 
-// تصميم الدبوس المودرن المسطح المصغر (نفس الحجم الجديد)
+// تصميم الدبوس المودرن المسطح المصغر
 const elegantIcon = L.divIcon({
   className: 'bg-transparent border-0',
   html: `
@@ -16,7 +16,7 @@ const elegantIcon = L.divIcon({
       </svg>
     </div>
   `,
-  iconSize: [28, 36], // الحجم الأصغر
+  iconSize: [28, 36],
   iconAnchor: [14, 36],
   popupAnchor: [0, -32],
 });
@@ -120,7 +120,8 @@ export default function LocationPicker({
             <input
               type="text"
               placeholder="ابحث عن مدينة أو منطقة لتقريب الخريطة..."
-              className="w-full pr-10 pl-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-[#C8A75A] outline-none text-sm font-medium transition-all"
+              /* تم التعديل هنا: text-base تمنع زووم الجوال، و md:text-sm للشاشات الأكبر */
+              className="w-full pr-10 pl-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-[#C8A75A] outline-none text-base md:text-sm font-medium transition-all"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleSearch())}
