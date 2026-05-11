@@ -25,7 +25,6 @@ export default function EventDetailsPage() {
       const { data, error } = await supabase.from('permit_requests').select('*').eq('id', eventId).single();
 
       if (data && !error) {
-        // استخراج مسار الصورة وتحويلها لرابط عام إن وجدت
         let imageUrl = null;
         if (data.campaign_image) {
           const { data: publicUrlData } = supabase.storage.from("request-files").getPublicUrl(data.campaign_image);
@@ -50,7 +49,7 @@ export default function EventDetailsPage() {
           submitterRole: data.submitter_role,
           latitude: data.latitude,
           longitude: data.longitude,
-          imageUrl: imageUrl // حفظ رابط الصورة
+          imageUrl: imageUrl
         });
       }
       setLoading(false);
@@ -59,7 +58,7 @@ export default function EventDetailsPage() {
   }, [eventId, supabase]);
 
   if (loading) return <div className="min-h-screen bg-[#F9FAFB] flex justify-center items-center"><Loader2 className="w-12 h-12 animate-spin text-[#073D35]" /></div>;
-  if (!event) return <div className="min-h-screen bg-[#F9FAFB] flex flex-col justify-center items-center"><h1 className="text-2xl font-bold mb-4">الفعالية غير موجودة</h1><Link href="/" className="bg-[#C8A75A] text-white px-6 py-2 rounded-xl">العودة</Link></div>;
+  if (!event) return <div className="min-h-screen bg-[#F9FAFB] flex flex-col justify-center items-center"><h1 className="text-2xl font-bold mb-4 text-[#073D35]">الفعالية غير موجودة</h1><Link href="/" className="bg-[#C8A75A] text-[#073D35] px-6 py-2 rounded-xl font-bold">العودة للرئيسية</Link></div>;
 
   const shareText = `ندعوكم لحضور ${event.type}: "${event.title}" في ${event.governorate}. التفاصيل:`
   const encodedText = encodeURIComponent(shareText);
@@ -83,32 +82,47 @@ export default function EventDetailsPage() {
           <span className="text-[#2F9E6D] bg-[#2F9E6D]/10 px-3 py-1.5 rounded-full text-sm font-bold flex items-center gap-1.5 border border-[#2F9E6D]/20 shadow-sm"><CheckCircle2 className="w-4 h-4" />{event.status}</span>
         </div>
 
-        {/* البطاقة الرئيسية مع الصورة (إن وجدت) */}
-        <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm mb-8 relative overflow-hidden flex flex-col">
-          {event.imageUrl && (
-            <div className="relative w-full h-64 md:h-80 lg:h-96 overflow-hidden bg-gray-100">
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
+        {/* البطاقة الرئيسية الذكية للعنوان والصورة */}
+        <div className="bg-white rounded-[2.5rem] border border-gray-200 shadow-sm mb-8 relative overflow-hidden flex flex-col">
+          {event.imageUrl ? (
+            <div className="relative w-full h-[400px] md:h-[500px] bg-gray-100 flex items-end">
               <img 
                 src={event.imageUrl} 
                 alt={event.title} 
-                className="w-full h-full object-cover object-center"
+                className="absolute inset-0 w-full h-full object-cover object-center"
               />
+              {/* صندوق الـ Glassmorphism الذي يضمن وضوح النص 100% */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#073D35]/90 via-[#073D35]/40 to-transparent z-10"></div>
+              
+              <div className="relative z-20 w-full p-8 md:p-12 text-white">
+                <span className="inline-block px-4 py-1.5 text-sm font-bold rounded-lg border mb-4 shadow-sm bg-white/20 text-white border-white/30 backdrop-blur-md">
+                  {event.type}
+                </span>
+                <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6 drop-shadow-lg">
+                  {event.title}
+                </h1>
+                <div className="flex flex-wrap items-center gap-6 font-medium p-5 rounded-2xl border inline-flex shadow-sm bg-[#073D35]/60 border-white/20 backdrop-blur-md text-white">
+                  <div className="flex items-center gap-2.5"><MapPin className="w-5 h-5 text-[#C8A75A]" /><span>{event.governorate} - {event.city}</span></div>
+                  <div className="w-px h-6 bg-white/30 hidden sm:block"></div>
+                  <div className="flex items-center gap-2.5"><CalendarDays className="w-5 h-5 text-[#C8A75A]" /><span className="font-sans" dir="ltr">{event.date}</span></div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-8 md:p-12 relative z-20">
+              <span className="inline-block px-4 py-1.5 text-sm font-bold rounded-lg border mb-4 shadow-sm bg-[#073D35]/5 text-[#073D35] border-[#073D35]/10">
+                {event.type}
+              </span>
+              <h1 className="text-3xl md:text-5xl font-bold text-gray-900 leading-tight mb-6">
+                {event.title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-6 font-medium p-5 rounded-2xl border inline-flex shadow-sm bg-gray-50 border-gray-100 text-gray-600">
+                <div className="flex items-center gap-2.5"><MapPin className="w-5 h-5 text-[#C8A75A]" /><span>{event.governorate} - {event.city}</span></div>
+                <div className="w-px h-6 bg-gray-300 hidden sm:block"></div>
+                <div className="flex items-center gap-2.5"><CalendarDays className="w-5 h-5 text-[#C8A75A]" /><span className="font-sans" dir="ltr">{event.date}</span></div>
+              </div>
             </div>
           )}
-          
-          <div className={`p-8 md:p-12 relative z-20 ${event.imageUrl ? '-mt-24' : ''}`}>
-            <span className={`inline-block px-4 py-1.5 text-sm font-bold rounded-lg border mb-4 shadow-sm ${event.imageUrl ? 'bg-white/20 text-white border-white/30 backdrop-blur-md' : 'bg-[#073D35]/5 text-[#073D35] border-[#073D35]/10'}`}>
-              {event.type}
-            </span>
-            <h1 className={`text-3xl md:text-5xl font-bold leading-tight mb-6 ${event.imageUrl ? 'text-white drop-shadow-md' : 'text-gray-900'}`}>
-              {event.title}
-            </h1>
-            <div className={`flex flex-wrap items-center gap-6 font-medium p-5 rounded-2xl border inline-flex shadow-sm ${event.imageUrl ? 'bg-white/95 border-white/20 text-gray-800' : 'bg-gray-50 border-gray-100 text-gray-600'}`}>
-              <div className="flex items-center gap-2.5"><MapPin className="w-5 h-5 text-[#C8A75A]" /><span>{event.governorate} - {event.city}</span></div>
-              <div className="w-px h-6 bg-gray-300 hidden sm:block"></div>
-              <div className="flex items-center gap-2.5"><CalendarDays className="w-5 h-5 text-[#C8A75A]" /><span className="font-sans" dir="ltr">{event.date}</span></div>
-            </div>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
