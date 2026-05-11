@@ -96,44 +96,73 @@ export default function CreateRequestPage() {
     }
   };
 
-  // دالة تحميل الـ PDF مباشرة بدلاً من الطباعة
-  const handleDownloadPDF = () => {
+  // --- الحل الجذري لمشكلة تحميل الـ PDF ---
+  const handleDownloadPDF = async () => {
     setIsDownloading(true);
     const element = document.getElementById("pdf-content-area");
     
+    if (!element) {
+      setIsDownloading(false);
+      return;
+    }
+
+    const processPDF = () => {
+      // إظهار العنصر لكي تستطيع المكتبة قراءته
+      element.style.display = "block";
+      
+      // إعطاء المتصفح 300 جزء من الثانية لـ "رسم" العنصر والخطوط قبل تصويره
+      setTimeout(async () => {
+        try {
+          const opt = {
+            margin:       10,
+            filename:     `طلب-ترخيص-${requestNumber}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          };
+          
+          await (window as any).html2pdf().set(opt).from(element).save();
+        } catch (error) {
+          console.error("PDF Error:", error);
+          alert("حدث خطأ أثناء إعداد الملف. يرجى المحاولة مرة أخرى.");
+        } finally {
+          // في جميع الأحوال (نجاح أو فشل) يجب إخفاء العنصر وإعادة الزر لحالته
+          element.style.display = "none";
+          setIsDownloading(false);
+        }
+      }, 300);
+    };
+
+    // تحميل المكتبة إذا لم تكن محملة مسبقاً
     if (!(window as any).html2pdf) {
       const script = document.createElement("script");
       script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-      script.onload = () => generatePDF(element);
+      script.onload = () => processPDF();
+      script.onerror = () => {
+        alert("فشل في الاتصال بخادم الـ PDF، يرجى التحقق من اتصال الإنترنت.");
+        setIsDownloading(false);
+      };
       document.body.appendChild(script);
     } else {
-      generatePDF(element);
+      processPDF();
     }
-  };
-
-  const generatePDF = (element: any) => {
-    // إظهار العنصر مؤقتاً لتقوم المكتبة بتصويره
-    element.style.display = "block";
-    
-    const opt = {
-      margin:       10,
-      filename:     `طلب-ترخيص-${requestNumber}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    
-    (window as any).html2pdf().set(opt).from(element).save().then(() => {
-      // إخفاء العنصر بعد التحميل
-      element.style.display = "none";
-      setIsDownloading(false);
-    });
   };
 
   if (isSubmitted && formData) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] py-12 arabic-premium-text" dir="rtl">
-        <div className="container mx-auto max-w-3xl px-4">
+      <div className="min-h-screen bg-[#F9FAFB] py-12 arabic-premium-text print-reset" dir="rtl">
+        <style jsx global>{`
+          .print-only { display: none; }
+          @media print {
+            .no-print { display: none !important; }
+            .print-reset { min-height: 0 !important; padding: 0 !important; background-color: white !important; }
+            .print-only { display: block !important; width: 100%; color: #000000 !important; background-color: #ffffff !important; padding: 10mm 15mm !important; box-sizing: border-box !important; }
+            body { background-color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0 !important; padding: 0 !important; }
+            @page { size: A4 portrait; margin: 0mm !important; }
+          }
+        `}</style>
+
+        <div className="container mx-auto max-w-3xl px-4 no-print">
           <div className="mb-8 rounded-3xl border border-gray-200 bg-white p-8 text-center shadow-lg md:p-12">
             <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-4 border-green-500/20 bg-green-500/10">
               <CheckCircle2 className="h-12 w-12 text-green-500" />
@@ -147,7 +176,7 @@ export default function CreateRequestPage() {
               <button 
                 onClick={handleDownloadPDF} 
                 disabled={isDownloading}
-                className="flex items-center justify-center gap-2 rounded-xl bg-[#073D35] px-8 py-4 font-bold text-white shadow-md shadow-[#073D35]/20 transition-all hover:bg-[#052e28] disabled:opacity-70"
+                className="flex items-center justify-center gap-2 rounded-xl bg-[#073D35] px-8 py-4 font-bold text-white shadow-md shadow-[#073D35]/20 transition-all hover:bg-[#052e28] disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isDownloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />} 
                 {isDownloading ? 'جاري التحميل...' : 'تحميل الطلب كـ PDF'}
@@ -160,8 +189,7 @@ export default function CreateRequestPage() {
         </div>
 
         {/* تصميم الـ PDF المخفي لغرض التحميل المباشر فقط */}
-        {/* تم استخدام whitespace-pre-wrap لحل مشكلة الأسطر المتعددة */}
-        <div style={{ display: 'none', position: 'absolute', left: '-9999px', top: '-9999px' }} id="pdf-content-area">
+        <div style={{ display: 'none', position: 'absolute', left: '-9999px', top: '-9999px', zIndex: -100 }} id="pdf-content-area">
           <div className="bg-white text-black text-right p-8 w-[210mm]" dir="rtl">
             <div className="mb-6 text-center border-b-[2px] border-black pb-4 pt-2">
               <h1 className="text-[16pt] font-bold underline decoration-2 underline-offset-4 mb-2">طلب ترخيص تجمع / فعالية مدنية</h1>
@@ -195,7 +223,6 @@ export default function CreateRequestPage() {
                     <td className="bg-gray-50 px-4 py-2.5 font-bold border-l border-gray-300">العدد المتوقع</td>
                     <td className="px-4 py-2.5 font-bold"><EnglishNumber>{formData.expectedAttendees}</EnglishNumber> شخص</td>
                   </tr>
-                  {/* هنا تم إصلاح التفاف النص (Text Wrap) */}
                   <tr className="border-b border-gray-300">
                     <td className="bg-gray-50 px-4 py-2.5 font-bold border-l border-gray-300 align-top">الهدف من الفعالية</td>
                     <td className="px-4 py-2.5 leading-[1.6] whitespace-pre-wrap break-words">{formData.eventGoal}</td>
@@ -300,7 +327,6 @@ export default function CreateRequestPage() {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-bold text-gray-700">الاسم الكامل *</label>
-                {/* استخدام text-base md:text-sm لحل مشكلة الزووم في الآيفون */}
                 <input type="text" {...register("fullName")} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 outline-none transition-all focus:border-[#C8A75A] text-base md:text-sm font-medium" placeholder="الاسم الثلاثي" />
                 <InputError error={errors.fullName?.message} />
               </div>
