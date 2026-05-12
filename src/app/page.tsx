@@ -112,6 +112,10 @@ export default function Home() {
           setMapCenter([position.coords.latitude, position.coords.longitude]);
           setMapZoom(12);
           setIsLocating(false);
+          // عمل سكرول للخريطة على الجوال
+          if (window.innerWidth < 1024) {
+            document.getElementById('map-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
         },
         (error) => {
           console.error("Error getting location:", error);
@@ -128,6 +132,11 @@ export default function Home() {
   const handleEventClick = (coordinates: [number, number]) => {
     setMapCenter(coordinates);
     setMapZoom(15);
+    
+    // الحل الذكي: إذا كان حجم الشاشة أقل من lg (1024px)، قم بالتمرير للأسفل ليرى الخريطة
+    if (window.innerWidth < 1024) {
+      document.getElementById('map-container')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   };
 
   return (
@@ -178,14 +187,14 @@ export default function Home() {
         <div className="container mx-auto px-4 flex flex-col lg:flex-row gap-8 items-start h-auto lg:h-[700px]">
           
           {/* القائمة الجانبية للفعاليات */}
-          <div className="w-full lg:w-1/3 flex flex-col h-full space-y-5">
+          <div className="w-full lg:w-1/3 flex flex-col h-[500px] lg:h-full space-y-5">
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">استكشف الفعاليات</h2>
               <p className="text-gray-500 text-sm font-medium">ابحث عن الأنشطة والتجمعات القريبة منك</p>
             </div>
 
             <div className="bg-white rounded-[1.5rem] border border-gray-200 shadow-sm p-5 flex-1 flex flex-col overflow-hidden">
-              <div className="space-y-3 mb-5 border-b border-gray-100 pb-5">
+              <div className="space-y-3 mb-5 border-b border-gray-100 pb-5 shrink-0">
                 <div className="relative group">
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
                     <Search className="h-5 w-5 text-gray-400 group-focus-within:text-[#C8A75A] transition-colors" />
@@ -193,7 +202,7 @@ export default function Home() {
                   <input
                     type="text"
                     placeholder="بحث عن فعالية، محافظة، منطقة..."
-                    className="block w-full rounded-xl border border-gray-200 bg-gray-50 py-3.5 pr-11 pl-4 text-gray-900 text-sm font-medium focus:border-[#C8A75A] focus:bg-white outline-none transition-all"
+                    className="block w-full rounded-xl border border-gray-200 bg-gray-50 py-3.5 pr-11 pl-4 text-gray-900 text-base md:text-sm font-medium focus:border-[#C8A75A] focus:bg-white outline-none transition-all"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -271,8 +280,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* الخريطة الكبيرة */}
-          <div className="w-full lg:w-2/3 h-[500px] lg:h-full p-2 bg-white rounded-[2rem] border border-gray-200 shadow-sm relative">
+          {/* الخريطة الكبيرة (تم إعطاؤها id للتمكن من التمرير إليها على الجوال) */}
+          <div id="map-container" className="w-full lg:w-2/3 h-[500px] lg:h-full p-2 bg-white rounded-[2rem] border border-gray-200 shadow-sm relative mt-8 lg:mt-0">
             <EventsMap events={filteredEvents} center={mapCenter} zoom={mapZoom} />
           </div>
 
