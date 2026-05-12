@@ -72,10 +72,10 @@ export async function POST(req: Request) {
       campaign_image: campaign_image_path
     };
 
-    const { error: dbError } = await supabase.from("permit_requests").insert([payload]);
+    const { data: insertedData, error: dbError } = await supabase.from("permit_requests").insert([payload]).select().single();
     if (dbError) throw dbError;
 
-    // إرسال الإيميل بتصميم "رهيب"
+    // إعداد النقل عبر البريد
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       try {
         const transporter = nodemailer.createTransport({
@@ -83,71 +83,62 @@ export async function POST(req: Request) {
           auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
         });
 
-        const trackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://syria-events-platform.vercel.app'}/track/${request_number}`;
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://syria-events-platform.vercel.app';
+        const trackUrl = `${baseUrl}/track/${request_number}`;
+        const adminUrl = `${baseUrl}/admin/requests/${insertedData.id}`;
 
+        // 1️⃣ إرسال إيميل التأكيد للمستخدم (تصميم فخم)
         await transporter.sendMail({
           from: `"منصة وينكم" <${process.env.EMAIL_USER}>`,
           to: data.email,
           subject: `تم استلام طلبك بنجاح | كود التتبع: ${request_number}`,
           html: `
-            <!DOCTYPE html>
-            <html lang="ar" dir="rtl">
-            <head>
-              <meta charset="UTF-8">
-              <style>
-                @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
-                body { font-family: 'Tajawal', Tahoma, Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
-              </style>
-            </head>
-            <body>
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f7f6; padding: 40px 20px;">
+            <div dir="rtl" style="font-family: 'Tajawal', Tahoma, Arial, sans-serif; background-color: #f4f7f6; padding: 30px;">
+              <table width="100%" style="max-width: 600px; margin: 0 auto; background: white; border-radius: 20px; overflow: hidden; border: 1px solid #eef2f1;">
+                <tr style="background-color: #073D35; text-align: center;">
+                  <td style="padding: 30px;">
+                    <h1 style="color: white; margin: 0;">مَنْصَـــة وَيْنِكُـــم</h1>
+                  </td>
+                </tr>
                 <tr>
-                  <td align="center">
-                    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #eef2f1;">
-                      <tr>
-                        <td align="center" style="background-color: #073D35; padding: 40px 20px;">
-                          <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 1px;">مَنْصَـــة وَيْنِكُـــم</h1>
-                          <p style="color: #C8A75A; margin: 10px 0 0 0; font-weight: bold; text-transform: uppercase; font-size: 12px; letter-spacing: 2px;">الفعاليات المدنية السورية</p>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 40px 30px; text-align: right;" dir="rtl">
-                          <h2 style="color: #073D35; font-size: 20px; margin-bottom: 20px;">مرحباً ${data.fullName}،</h2>
-                          <p style="color: #4b5563; line-height: 1.8; font-size: 16px;">
-                            لقد تم استلام طلبك لتنظيم فعالية <strong>"${data.eventTitle}"</strong> بنجاح. فريق الإدارة سيقوم بمراجعة البيانات والوثائق المرفقة في أقرب وقت.
-                          </p>
-                          
-                          <div style="background-color: #FDFBF7; border: 2px dashed #C8A75A; border-radius: 15px; padding: 30px; text-align: center; margin: 30px 0;">
-                            <p style="color: #073D35; font-size: 14px; margin-bottom: 10px; font-weight: bold;">كود التتبع الخاص بك</p>
-                            <span style="font-family: monospace; font-size: 36px; font-weight: bold; color: #C8A75A; letter-spacing: 5px;">${request_number}</span>
-                          </div>
-
-                          <p style="color: #6b7280; font-size: 14px; margin-bottom: 30px;">
-                            يرجى الاحتفاظ بهذا الكود لتتمكن من تتبع حالة الطلب، رفع وثيقة الموافقة لاحقاً، أو تعديل البيانات.
-                          </p>
-
-                          <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                            <tr>
-                              <td align="center">
-                                <a href="${trackUrl}" style="background-color: #073D35; color: #ffffff; padding: 15px 35px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block; border-bottom: 3px solid #052e28;">تتبع حالة الطلب الآن</a>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td align="center" style="background-color: #f9fafb; padding: 30px 20px; border-top: 1px solid #edf2f1;">
-                          <p style="color: #9ca3af; font-size: 12px; margin: 0;">هذا الإيميل مرسل تلقائياً من منصة وينكم للفعاليات المدنية.</p>
-                        </td>
-                      </tr>
-                    </table>
+                  <td style="padding: 40px; text-align: right;">
+                    <h2 style="color: #073D35;">مرحباً ${data.fullName}،</h2>
+                    <p style="font-size: 16px; color: #4b5563; line-height: 1.8;">لقد تم تسجيل طلبك <strong>"${data.eventTitle}"</strong> بنجاح.</p>
+                    <div style="background: #FDFBF7; border: 2px dashed #C8A75A; padding: 20px; text-align: center; margin: 20px 0;">
+                      <p style="margin: 0; font-size: 14px;">كود التتبع الخاص بك</p>
+                      <p style="font-size: 32px; font-weight: bold; color: #C8A75A; margin: 10px 0;">${request_number}</p>
+                    </div>
+                    <a href="${trackUrl}" style="display: block; background: #073D35; color: white; padding: 15px; text-align: center; text-decoration: none; border-radius: 12px; font-weight: bold;">تتبع حالة الطلب</a>
                   </td>
                 </tr>
               </table>
-            </body>
-            </html>
+            </div>
           `,
         });
+
+        // 2️⃣ إرسال إيميل تنبيه لك (كإدمن)
+        await transporter.sendMail({
+          from: `"نظام التنبيهات" <${process.env.EMAIL_USER}>`,
+          to: process.env.EMAIL_USER, // سيرسل لنفس إيميل الإدارة
+          subject: `🔔 طلب جديد بانتظار المراجعة: ${data.eventTitle}`,
+          html: `
+            <div dir="rtl" style="font-family: Arial, sans-serif; padding: 20px; background: #fff;">
+              <div style="border: 1px solid #eee; border-right: 5px solid #C8A75A; padding: 20px; border-radius: 10px;">
+                <h2 style="color: #073D35; margin-top: 0;">وصول طلب ترخيص جديد</h2>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                <p><strong>اسم الفعالية:</strong> ${data.eventTitle}</p>
+                <p><strong>المقدم:</strong> ${data.fullName} (${data.submitterRole})</p>
+                <p><strong>المحافظة:</strong> ${data.governorate}</p>
+                <p><strong>التاريخ:</strong> ${data.eventDate}</p>
+                <p><strong>العدد المتوقع:</strong> ${data.expectedAttendees}</p>
+                <div style="margin-top: 30px;">
+                  <a href="${adminUrl}" style="background: #C8A75A; color: #073D35; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold;">فتح تفاصيل الطلب في لوحة الإدارة</a>
+                </div>
+              </div>
+            </div>
+          `,
+        });
+
       } catch (mailErr) {
         console.error("Mail Error:", mailErr);
       }
