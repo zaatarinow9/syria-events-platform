@@ -19,7 +19,6 @@ export async function POST(req: Request) {
 
     let campaign_image_path = null;
 
-    // معالجة صورة الحملة (الشعار) إن وجدت كـ Base64
     if (data.campaignLogo) {
       try {
         const matches = data.campaignLogo.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
@@ -40,50 +39,43 @@ export async function POST(req: Request) {
         }
       } catch (imageErr) {
         console.error("فشل رفع صورة الحملة:", imageErr);
-        // لا نوقف الطلب إن فشل رفع الصورة فقط
       }
     }
 
     const payload = {
-      request_number: request_number,
-      full_name: data.fullName || "",
-      email: data.email || "",
-      phone: data.phone || "",
-      submitter_role: data.submitterRole || "",
+      request_number,
+      full_name: data.fullName,
+      email: data.email,
+      phone: data.phone,
+      submitter_role: data.submitterRole,
       organization_name: data.organizationName || null,
-      event_title: data.eventTitle || "",
-      event_type: data.eventType || "",
-      governorate: data.governorate || "",
+      event_title: data.eventTitle,
+      event_type: data.eventType,
+      governorate: data.governorate,
       city: data.city || null,
-      location: data.location || "",
-      latitude: Number(data.latitude) || 34.8,
-      longitude: Number(data.longitude) || 38.0,
-      event_date: data.eventDate || "2024-01-01",
-      expected_attendees: Number(data.expectedAttendees) || 1,
-      start_time: data.startTime || "00:00",
-      end_time: data.endTime || "00:00",
+      location: data.location,
+      latitude: Number(data.latitude),
+      longitude: Number(data.longitude),
+      event_date: data.eventDate,
+      expected_attendees: Number(data.expectedAttendees),
+      start_time: data.startTime,
+      end_time: data.endTime,
       route: data.route || null,
-      event_goal: data.eventGoal || "",
-      committee_head_name: data.committeeHeadName || data.fullName,
-      committee_head_phone: data.committeeHeadPhone || data.phone,
-      committee_head_email: data.committeeHeadEmail || data.email,
+      event_goal: data.eventGoal,
+      committee_head_name: data.committeeHeadName,
+      committee_head_phone: data.committeeHeadPhone,
+      committee_head_email: data.committeeHeadEmail,
       member_1_name: data.member1Name || null,
       member_1_phone: data.member1Phone || null,
       member_2_name: data.member2Name || null,
       member_2_phone: data.member2Phone || null,
-      campaign_image: campaign_image_path // حفظ مسار الشعار
+      campaign_image: campaign_image_path
     };
 
     const { error: dbError } = await supabase.from("permit_requests").insert([payload]);
+    if (dbError) throw dbError;
 
-    if (dbError) {
-      console.error("Supabase Error:", dbError);
-      return NextResponse.json(
-        { error: `خطأ في قاعدة البيانات: ${dbError.message || dbError.details}` }, 
-        { status: 400 }
-      );
-    }
-
+    // إرسال الإيميل بتصميم "رهيب"
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       try {
         const transporter = nodemailer.createTransport({
@@ -91,13 +83,74 @@ export async function POST(req: Request) {
           auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
         });
 
+        const trackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://syria-events-platform.vercel.app'}/track/${request_number}`;
+
         await transporter.sendMail({
           from: `"منصة وينكم" <${process.env.EMAIL_USER}>`,
           to: data.email,
           subject: `تم استلام طلبك بنجاح | كود التتبع: ${request_number}`,
-          html: `<div dir="rtl"><h2>أهلاً بك، تم تسجيل طلبك: ${data.eventTitle}</h2><p>كود التتبع الخاص بك هو: <b>${request_number}</b></p></div>`,
+          html: `
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+              <meta charset="UTF-8">
+              <style>
+                @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
+                body { font-family: 'Tajawal', Tahoma, Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
+              </style>
+            </head>
+            <body>
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f7f6; padding: 40px 20px;">
+                <tr>
+                  <td align="center">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #eef2f1;">
+                      <tr>
+                        <td align="center" style="background-color: #073D35; padding: 40px 20px;">
+                          <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 1px;">مَنْصَـــة وَيْنِكُـــم</h1>
+                          <p style="color: #C8A75A; margin: 10px 0 0 0; font-weight: bold; text-transform: uppercase; font-size: 12px; letter-spacing: 2px;">الفعاليات المدنية السورية</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 40px 30px; text-align: right;" dir="rtl">
+                          <h2 style="color: #073D35; font-size: 20px; margin-bottom: 20px;">مرحباً ${data.fullName}،</h2>
+                          <p style="color: #4b5563; line-height: 1.8; font-size: 16px;">
+                            لقد تم استلام طلبك لتنظيم فعالية <strong>"${data.eventTitle}"</strong> بنجاح. فريق الإدارة سيقوم بمراجعة البيانات والوثائق المرفقة في أقرب وقت.
+                          </p>
+                          
+                          <div style="background-color: #FDFBF7; border: 2px dashed #C8A75A; border-radius: 15px; padding: 30px; text-align: center; margin: 30px 0;">
+                            <p style="color: #073D35; font-size: 14px; margin-bottom: 10px; font-weight: bold;">كود التتبع الخاص بك</p>
+                            <span style="font-family: monospace; font-size: 36px; font-weight: bold; color: #C8A75A; letter-spacing: 5px;">${request_number}</span>
+                          </div>
+
+                          <p style="color: #6b7280; font-size: 14px; margin-bottom: 30px;">
+                            يرجى الاحتفاظ بهذا الكود لتتمكن من تتبع حالة الطلب، رفع وثيقة الموافقة لاحقاً، أو تعديل البيانات.
+                          </p>
+
+                          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                            <tr>
+                              <td align="center">
+                                <a href="${trackUrl}" style="background-color: #073D35; color: #ffffff; padding: 15px 35px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block; border-bottom: 3px solid #052e28;">تتبع حالة الطلب الآن</a>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="background-color: #f9fafb; padding: 30px 20px; border-top: 1px solid #edf2f1;">
+                          <p style="color: #9ca3af; font-size: 12px; margin: 0;">هذا الإيميل مرسل تلقائياً من منصة وينكم للفعاليات المدنية.</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </body>
+            </html>
+          `,
         });
-      } catch (mailErr) {}
+      } catch (mailErr) {
+        console.error("Mail Error:", mailErr);
+      }
     }
 
     return NextResponse.json({ request_number });
