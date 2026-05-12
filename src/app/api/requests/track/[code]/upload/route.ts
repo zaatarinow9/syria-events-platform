@@ -56,7 +56,7 @@ export async function POST(
 
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
-        to: "a7mad.y.alkilani@gmail.com",
+        to: "wenkom.events@gmail.com",
         subject: `تم رفع صور جديدة للطلب (${code})`,
         html: `<div dir="rtl"><h2>صور موافقة جديدة</h2><p>رقم الطلب: ${code}</p><p>الفعالية: ${reqData.event_title}</p></div>`,
       });
