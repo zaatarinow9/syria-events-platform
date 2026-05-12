@@ -21,10 +21,14 @@ export default function RequestActions({ requestId, currentStatus, isPublic }: a
       if (response.ok) {
         router.refresh(); // لتحديث البيانات في السيرفر فوراً
       } else {
-        alert("حدث خطأ أثناء التحديث");
+        // قراءة رسالة الخطأ من السيرفر لمعرفة السبب إن حدث مرة أخرى
+        const errorData = await response.json();
+        console.error("Update Error:", errorData);
+        alert("حدث خطأ أثناء التحديث: " + (errorData.error || "مجهول"));
       }
     } catch (error) {
-      alert("خطأ في الاتصال");
+      console.error("Network Error:", error);
+      alert("خطأ في الاتصال بالخادم.");
     } finally {
       setLoading(false);
     }
