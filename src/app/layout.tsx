@@ -26,11 +26,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar-TN" dir="rtl">
+    <html lang="ar-TN" dir="rtl" suppressHydrationWarning>
       <head>
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
       </head>
-      <body className={`${thmanyah.variable} bg-[#F9FAFB] text-[#111827] antialiased min-h-screen flex flex-col`}>
+      <body suppressHydrationWarning className={`${thmanyah.variable} bg-[#F9FAFB] text-[#111827] antialiased min-h-screen flex flex-col`}>
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
